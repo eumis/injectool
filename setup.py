@@ -36,7 +36,7 @@ _HERE = dirname(__file__)
 
 def _get_version():
     about = {}
-    with open(join_path(_HERE, "injectool", "__init__.py")) as f:
+    with open(join_path(_HERE, "injectool", "__version__.py")) as f:
         exec(f.read(), about)
     return about['__version__']
 

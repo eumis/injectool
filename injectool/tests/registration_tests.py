@@ -35,7 +35,7 @@ def test_register_single(value, param):
     (lambda: None, None),
     (lambda: object(), 'parameter')
 ])
-def test_register_single(value, param):
+def test_register_func(value, param):
     """register_func() should register resolver that returns function"""
     key = 'key'
 
