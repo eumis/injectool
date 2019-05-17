@@ -46,7 +46,7 @@ class ScopeTests:
                 assert outer_scope.get_container() == inner_scope.get_container()
 
     @staticmethod
-    def test_inner_scope():
+    def test_inner_scope_dependencies():
         """Scope should use own Container for resolving dependencies if used inside other scope"""
         register_single('value', 0)
         with Scope('one'):
@@ -58,6 +58,16 @@ class ScopeTests:
             assert resolve('value') == 1
         with Scope('two'):
             assert resolve('value') == 2
+        assert resolve('value') == 0
+
+    @staticmethod
+    def test_parent_scope_dependencies():
+        """Scope should use parent dependencies if doesn't have own"""
+        register_single('value', 0)
+        with Scope('one'):
+            assert resolve('value') == 0
+            with Scope('two'):
+                assert resolve('value') == 0
         assert resolve('value') == 0
 
 

@@ -44,3 +44,11 @@ class Container:
             if key in self._factories:
                 return self._factories[key](param)
             raise DependencyError('Dependency "{0}" is not found'.format(key))
+
+    def copy(self):
+        """returns new container with same dependencies"""
+        new = Container()
+        new._resolvers = self._resolvers.copy()
+        new._factories = self._factories.copy()
+        new.register(Container, lambda: new)
+        return new

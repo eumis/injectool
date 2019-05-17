@@ -19,7 +19,9 @@ class Scope:
         self._previous_scope = None
         self.name = name
         if name not in Scope._scope_containers:
-            Scope._scope_containers[name] = Container()
+            parent_scope = Scope._current
+            Scope._scope_containers[name] = parent_scope.get_container().copy() \
+                if parent_scope else Container()
 
     def get_container(self):
         """Returns scope container"""

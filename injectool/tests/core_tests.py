@@ -69,6 +69,55 @@ class ContainerTests:
 
         assert container.get(Container) == container
 
+    @staticmethod
+    @mark.parametrize('dependency, param', [
+        ('key', None),
+        (get_dependency_key, 'param'),
+        (Scope, None)
+    ])
+    def test_copy(dependency, param):
+        """copy() should return new Container with same dependencies"""
+        container = Container()
+        value = object()
+        container.register(dependency, lambda: value, param)
+
+        actual = container.copy()
+
+        assert actual.get(dependency, param) == value
+
+    @staticmethod
+    @mark.parametrize('dependency, param', [
+        ('key', None),
+        (get_dependency_key, 'param'),
+        (Scope, None)
+    ])
+    def test_copy_uses_only_current_dependencies(dependency, param):
+        """copy() should return new Container with same dependencies"""
+        container = Container()
+
+        actual = container.copy()
+        value = object()
+        container.register(dependency, lambda: value, param)
+
+        with raises(DependencyError):
+            assert actual.get(dependency, param)
+
+    @staticmethod
+    def test_copy_registers_own():
+        """copy() should return new Container with same dependencies"""
+        container = Container()
+        actual = container.copy()
+
+        assert actual.get(Container) == actual
+
+    @staticmethod
+    def test_copy_for_new_dependencies():
+        """copy() should return new Container with same dependencies"""
+        container = Container()
+        actual = container.copy()
+
+        assert actual.get(Container) == actual
+
 
 @mark.parametrize('dependency, key', [
     ('key', 'key'),
