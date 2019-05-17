@@ -35,7 +35,7 @@ def test_register_single(dep, param):
 
 
 @dependency()
-def some_function(arg1, arg2):
+def some_function(_, __):
     pass
 
 

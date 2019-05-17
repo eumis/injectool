@@ -1,16 +1,19 @@
 """Scopes"""
 from functools import wraps
-from threading import local as thread_local
 
 from .core import Container, DependencyError
-
-_THREAD_LOCAL = thread_local()
 
 
 class Scope:
     """Dependencies scope"""
 
     _scope_containers = {}
+    _current: 'Scope' = None
+
+    @staticmethod
+    def get_current() -> 'Scope':
+        """returns current scope"""
+        return Scope._current
 
     def __init__(self, name):
         self._previous_scope = None
@@ -18,43 +21,28 @@ class Scope:
         if name not in Scope._scope_containers:
             Scope._scope_containers[name] = Container()
 
-    @property
-    def container(self):
+    def get_container(self):
         """Returns scope container"""
         return Scope._scope_containers[self.name]
 
     def __enter__(self):
         try:
-            self._previous_scope = get_scope()
+            self._previous_scope = Scope._current
         except DependencyError:
             self._previous_scope = None
         if not self._previous_scope or self.name != self._previous_scope.name:
-            self.container.register('scope', lambda: self)
-            set_current_scope(self)
+            Scope._current = self
         return self
 
     def __exit__(self, exc_type, value, traceback):
-        set_current_scope(self._previous_scope)
-
-
-def get_scope() -> Scope:
-    """return current scope"""
-    current_scope = getattr(_THREAD_LOCAL, 'current_scope', None)
-    if current_scope is None:
-        raise DependencyError("ioc is not set up for current thread")
-    return _THREAD_LOCAL.current_scope
-
-
-def get_container() -> Container:
-    return get_scope().container
-
-
-def set_current_scope(current_scope: Scope):
-    """sets current scope"""
-    _THREAD_LOCAL.current_scope = current_scope
+        Scope._current = self._previous_scope
 
 
 Scope('').__enter__()
+
+
+def get_container() -> Container:
+    return Scope.get_current().get_container()
 
 
 def scope(name):
@@ -69,7 +57,7 @@ def scope(name):
 def wrap_with_scope(func, scope_name=None):
     """Wraps function with scope. If scope_name is None current scope is used"""
     if scope_name is None:
-        scope_name = get_scope().name
+        scope_name = Scope.get_current().name
     return lambda *args, sc=scope_name, **kwargs: \
         _call_with_scope(func, sc, args, kwargs)
 
