@@ -1,4 +1,5 @@
 """Scopes"""
+from functools import wraps
 from threading import local as thread_local
 
 from .core import Container, DependencyError
@@ -60,7 +61,7 @@ def scope(name):
     """Calls function with passed scope"""
 
     def _decorate(func):
-        return wrap_with_scope(func, name)
+        return wraps(func)(wrap_with_scope(func, name))
 
     return _decorate
 

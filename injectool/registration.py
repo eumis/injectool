@@ -1,20 +1,20 @@
 """Dependency registration helpers"""
 
-from typing import Callable, Any
+from typing import Callable, Any, Union, Type
 
-from .scope import get_scope
+from .scope import get_container
 
 
-def register(key: str, resolver: Callable[[], Any], param: Any = None):
+def register(dependency: Union[str, callable, Type[Any]], resolver: Callable[[], Any], param: Any = None):
     """Adds resolver to current scope container"""
-    get_scope().container.register(key, resolver, param)
+    get_container().register(dependency, resolver, param)
 
 
-def register_single(key: str, value: Any, param: Any = None):
+def register_single(dependency: Union[str, callable, Type[Any]], value: Any, param: Any = None):
     """Generates resolver to return passed value"""
-    get_scope().container.register(key, lambda: value, param)
+    get_container().register(dependency, lambda: value, param)
 
 
-def register_func(key: str, func: Any, param: Any = None):
+def register_func(dependency: Union[str, callable, Type[Any]], func: callable, param: Any = None):
     """Generates resolver to return passed function"""
-    register_single(key, func, param)
+    register_single(dependency, func, param)

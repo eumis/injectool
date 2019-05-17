@@ -1,5 +1,5 @@
 from injectool import register_single, inject
-from injectool.scope import Scope, scope, wrap_with_scope, get_container, get_scope
+from injectool import Scope, scope, wrap_with_scope, get_container, get_scope
 
 
 class ScopeTests:
