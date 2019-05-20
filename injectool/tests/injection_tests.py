@@ -2,44 +2,71 @@ from unittest.mock import Mock
 
 from pytest import mark
 
-from injectool import inject, register_single, register_func, dependency
+from injectool import inject, register_single, dependency, Scope, register
+from injectool import get_dependency_key, Container, resolve
 
 
-def test_inject():
-    """should pass dependencies as optional parameters"""
-    one = object()
-
-    def two(): return one
-
-    register_single('one', one)
-    register_func('two', two)
-
-    assert _get_default_injected() == (one, two)
-    assert _get_kwargs_injected() == (one, two)
-
-
-@inject('one', 'two')
-def _get_default_injected(one=None, two=None):
-    return one, two
-
-
-@inject('one', 'two')
-def _get_kwargs_injected(**kwargs):
-    return kwargs['one'], kwargs['two']
-
-
-@mark.parametrize('key, dependency_key', [
-    (None, 'interface'),
+@mark.parametrize('dep, key', [
     ('key', 'key'),
+    (get_dependency_key, 'get_dependency_key'),
+    (Container, 'Container')
 ])
-def test_dependency(key, dependency_key):
-    @dependency(key)
-    def interface():
-        pass
+def test_inject(dep, key):
+    """should inject dependencies as optional parameters"""
 
+    @inject(dep)
+    def get_implementation(**kwargs):
+        return kwargs[key]
+
+    with Scope('test_inject'):
+        value = object()
+        register_single(dep, value)
+
+        assert get_implementation() == value
+
+
+@dependency()
+def interface_func():
+    pass
+
+
+@dependency('func_key')
+def keyed_func():
+    pass
+
+
+class Interface:
+    pass
+
+
+@dependency(Interface)
+def get_interface():
+    pass
+
+
+@mark.parametrize('dep, key', [
+    (interface_func, get_dependency_key(interface_func)),
+    (keyed_func, 'func_key'),
+    (get_interface, get_dependency_key(Interface)),
+])
+def test_dependency(dep, key):
     implementation = Mock()
-    register_func(dependency_key, implementation)
+    register(key, lambda: implementation)
 
-    interface()
+    dep()
 
     assert implementation.called
+
+
+@mark.parametrize('dep, key, param', [
+    ('key', 'key', None),
+    (get_dependency_key, 'get_dependency_key', Container),
+    (Container, 'Container', 'parameter')
+])
+def test_resolve(dep, key, param):
+    """should return resolved dependency in current scope"""
+    with Scope('test_resolve'):
+        value = object()
+        register_single(dep, value, param)
+
+        assert resolve(dep, param) == value

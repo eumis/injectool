@@ -1,45 +1,56 @@
 from pytest import mark
 
-from injectool import register, register_single, register_func, Scope, get_container
+from injectool import register, register_single, register_func
+from injectool import get_dependency_key, Scope, get_container, dependency
 
 
-@mark.parametrize('param', [None, 'parameter'])
-def test_register(param):
+@mark.parametrize('dep, param', [
+    ('key', None),
+    (get_dependency_key, 'param'),
+    (Scope, None)
+])
+def test_register(dep, param):
     """register() register resolver in current container"""
     value = object()
-    key = 'key'
 
     with Scope('test_register'):
-        register(key, lambda i=value: i, param)
+        register(dep, lambda v=value: v, param)
 
-        assert get_container().get(key, param) == value
+        assert get_container().get(dep, param) == value
 
 
-@mark.parametrize('value, param', [
-    (object(), None),
-    (object(), 'parameter'),
-    (lambda: None, None),
-    (lambda: object(), 'parameter')
+@mark.parametrize('dep, param', [
+    ('key', None),
+    (get_dependency_key, 'param'),
+    (Scope, None)
 ])
-def test_register_single(value, param):
+def test_register_single(dep, param):
     """register_single() should register resolver that returns value"""
-    key = 'key'
+    value = object()
 
     with Scope('test_register_single'):
-        register_single(key, value, param)
+        register_single(dep, value, param)
 
-        assert get_container().get(key, param) == value
+        assert get_container().get(dep, param) == value
 
 
-@mark.parametrize('value, param', [
-    (lambda: None, None),
-    (lambda: object(), 'parameter')
+@dependency()
+def some_function(_, __):
+    pass
+
+
+def some_implementation(arg1, arg2):
+    print(arg1, arg2)
+
+
+@mark.parametrize('dep, func, param', [
+    (some_function, some_implementation, None),
+    (some_function, lambda a, b: None, 'parameter'),
+    (get_dependency_key, lambda *a: None, None)
 ])
-def test_register_func(value, param):
-    """register_func() should register resolver that returns function"""
-    key = 'key'
-
+def test_register_func(dep, func, param):
+    """should register function as singleton"""
     with Scope('test_register_func'):
-        register_func(key, value, param)
+        register_func(dep, func, param)
 
-        assert get_container().get(key, param) == value
+        assert get_container().get(dep, param) == func
