@@ -103,7 +103,7 @@ class ContainerTests:
             assert actual.get(dependency, param)
 
     @staticmethod
-    def test_copy_registers_own():
+    def test_copy_registers_self():
         """copy() should return new Container with same dependencies"""
         container = Container()
         actual = container.copy()
@@ -112,11 +112,15 @@ class ContainerTests:
 
     @staticmethod
     def test_copy_for_new_dependencies():
-        """copy() should return new Container with same dependencies"""
+        """dependencies for copied container does not affect parent"""
         container = Container()
-        actual = container.copy()
+        container.register('value', lambda: 0)
 
-        assert actual.get(Container) == actual
+        actual = container.copy()
+        actual.register('value', lambda: 1)
+
+        assert container.get('value') == 0
+        assert actual.get('value') == 1
 
 
 @mark.parametrize('dependency, key', [

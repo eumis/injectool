@@ -1,4 +1,5 @@
 """Scopes"""
+
 from functools import wraps
 
 from .core import Container, DependencyError
@@ -23,7 +24,7 @@ class Scope:
             Scope._scope_containers[name] = parent_scope.get_container().copy() \
                 if parent_scope else Container()
 
-    def get_container(self):
+    def get_container(self) -> Container:
         """Returns scope container"""
         return Scope._scope_containers[self.name]
 

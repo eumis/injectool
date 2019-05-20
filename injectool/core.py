@@ -1,5 +1,5 @@
 """Core functionality"""
-
+from copy import deepcopy
 from typing import Any, Callable, Union, Type
 
 
@@ -45,10 +45,10 @@ class Container:
                 return self._factories[key](param)
             raise DependencyError('Dependency "{0}" is not found'.format(key))
 
-    def copy(self):
+    def copy(self) -> 'Container':
         """returns new container with same dependencies"""
         new = Container()
-        new._resolvers = self._resolvers.copy()
-        new._factories = self._factories.copy()
+        new._factories = deepcopy(self._factories)
+        new._resolvers = deepcopy(self._resolvers)
         new.register(Container, lambda: new)
         return new
