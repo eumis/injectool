@@ -1,9 +1,18 @@
 from unittest.mock import Mock
 
-from pytest import mark
+from pytest import mark, fixture
 
 from injectool import inject, register_single, dependency, Scope, register
 from injectool import get_dependency_key, Container, resolve
+from injectool.core import make_default
+
+
+@fixture
+def inject_fixture():
+    name = 'test_container'
+    Container._containers.pop(name, None)
+    with make_default(name) as container:
+        yield container
 
 
 @mark.parametrize('dep, key', [
@@ -12,17 +21,16 @@ from injectool import get_dependency_key, Container, resolve
     (Container, 'Container')
 ])
 def test_inject(dep, key):
-    """should inject dependencies as optional parameters"""
+    """should inject dependencies as optional parameters using default container"""
 
     @inject(dep)
     def get_implementation(**kwargs):
         return kwargs[key]
 
-    with Scope('test_inject'):
-        value = object()
-        register_single(dep, value)
+    value = object()
+    register_single(dep, value)
 
-        assert get_implementation() == value
+    assert get_implementation() == value
 
 
 @dependency()
@@ -64,8 +72,8 @@ def test_dependency(dep, key):
     (Container, 'Container', 'parameter')
 ])
 def test_resolve(dep, key, param):
-    """should return resolved dependency in current scope"""
-    with Scope('test_resolve'):
+    """should return resolved dependency from default container"""
+    with make_default('test_resolve'):
         value = object()
         register_single(dep, value, param)
 

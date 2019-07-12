@@ -1,5 +1,9 @@
 # Changelog
 
+## Dev
+
+- Added multiple containers support(instead of scopes)
+
 ## 1.0.1
 
 - Added using functions and classes as keys

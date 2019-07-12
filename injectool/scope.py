@@ -41,7 +41,7 @@ class Scope:
         Scope._current = self._previous_scope
 
 
-Scope('').__enter__()
+# Scope('').__enter__()
 
 
 def get_container() -> Container:

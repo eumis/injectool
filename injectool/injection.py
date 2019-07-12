@@ -1,18 +1,18 @@
 """Injection functionality"""
+
 from functools import wraps
-from typing import List, Union, Type, Any
+from typing import List, Union, Any, Callable
 
-from .core import get_dependency_key
-from .scope import get_container
-
-
-def resolve(dep: Union[str, callable] = None, param: Any = None):
-    """resolves dependency in current scope"""
-    return get_container().get(dep, param)
+from injectool.core import get_dependency_key, Container
 
 
-def inject(*dependencies: List[Union[str, callable, Type[Any]]]):
-    """Resolves dependencies in current scope and passes it as optional parameters to function"""
+def resolve(dep: Union[str, Callable], param: Any = None):
+    """resolves dependency in default container"""
+    return Container.get().resolve(dep, param)
+
+
+def inject(*dependencies: List[Union[str, Callable]]):
+    """Resolves dependencies in default container and passes it as optional parameters to function"""
 
     def _decorate(func):
         keys = [get_dependency_key(dep) for dep in dependencies]
@@ -30,8 +30,8 @@ def inject(*dependencies: List[Union[str, callable, Type[Any]]]):
     return _decorate
 
 
-def dependency(dep: Union[str, callable] = None):
-    """Substitute function by calling resolved in current scope"""
+def dependency(dep: Union[str, Callable] = None):
+    """Substitute function by calling resolved in default container"""
 
     def _decorate(func):
         key = func if dep is None else dep
