@@ -41,6 +41,28 @@ class ContainerTests:
         with raises(DependencyError):
             Container(name)
 
+    @staticmethod
+    def test_get_default():
+        """get() returns default container"""
+        assert Container.get() == Container.get('')
+
+    @staticmethod
+    @mark.parametrize('name', ['name', 'another name'])
+    def test_get_named(name):
+        """get() returns container by name"""
+        container = Container(name)
+
+        assert Container.get(name) == container
+
+    @staticmethod
+    def test_get_raises():
+        """get() should raise DependencyError if container not found"""
+        with raises(DependencyError):
+            Container.get('some container')
+
+
+@mark.usefixtures('container_fixture')
+class ContainerRegisterTests:
     @mark.parametrize('dependency, param', [
         ('key', None),
         (get_dependency_key, 'param'),
@@ -93,6 +115,9 @@ class ContainerTests:
         """Container should register himself with key "Container"""
         assert self.container.resolve(Container) == self.container
 
+
+@mark.usefixtures('container_fixture')
+class ContainerCopyTests:
     @mark.parametrize('dependency, param', [
         ('key', None),
         (get_dependency_key, 'param'),
@@ -156,25 +181,6 @@ class ContainerTests:
 
         assert self.container.resolve('value') == 0
         assert actual.resolve('value') == 1
-
-    @staticmethod
-    def test_get_default():
-        """get() returns default container"""
-        assert Container.get() == Container.get('')
-
-    @staticmethod
-    @mark.parametrize('name', ['name', 'another name'])
-    def test_get_named(name):
-        """get() returns container by name"""
-        container = Container(name)
-
-        assert Container.get(name) == container
-
-    @staticmethod
-    def test_get_raises():
-        """get() should raise DependencyError if container not found"""
-        with raises(DependencyError):
-            Container.get('some container')
 
 
 @mark.usefixtures('container_fixture')

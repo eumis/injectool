@@ -1,5 +1,6 @@
 """Core functionality"""
 
+from abc import abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any, Callable, Union
@@ -11,6 +12,12 @@ class DependencyError(Exception):
 
 def get_dependency_key(dependency: Union[str, Callable]) -> str:
     return dependency if isinstance(dependency, str) else dependency.__name__
+
+
+class Resolver:
+    @abstractmethod
+    def resolve(self, container: 'Container', param: Any = None):
+        """Factory method for resolving dependency"""
 
 
 class Container:
@@ -43,10 +50,8 @@ class Container:
 
         self._resolvers[key][param] = resolver
 
-    def register_factory(self, dependency: Union[str, Callable], factory: Callable[[Any], Any]):
-        """Add resolver that called with passed param"""
-        key = get_dependency_key(dependency)
-        self._factories[key] = factory
+    def get_resolver(self, dependency: Union[str, Callable]) -> Resolver:
+        pass
 
     def resolve(self, dependency: Union[str, Callable], param=None) -> Any:
         """Resolve dependency"""
