@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, Callable, Union
+from typing import Any, Callable, Union, Type
 
 
 class DependencyError(Exception):
@@ -138,6 +138,11 @@ def add_singleton(dependency: Union[str, Callable], value: Any):
 def add_resolve_function(dependency: Union[str, Callable], resolve_: Callable[['Container', Any], Any]):
     """Adds function resolver to current container"""
     Container.get().add(dependency, FunctionResolver(resolve_))
+
+
+def add_type(dependency: Union[str, Callable], type_: Type):
+    """Adds type resolver to current container"""
+    add_resolve_function(dependency, lambda c, p=None: type_())
 
 
 def resolve(dependency: Union[str, Callable], param: Any = None):

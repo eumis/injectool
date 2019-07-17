@@ -3,7 +3,7 @@ from unittest.mock import Mock, call
 from pytest import raises, mark, fixture, fail
 
 from injectool import Container, DependencyError
-from injectool.core import get_dependency_key, SingletonResolver, FunctionResolver
+from injectool.core import get_dependency_key, SingletonResolver, FunctionResolver, add_type
 from injectool.core import make_default, add, add_singleton, add_resolve_function, resolve
 
 
@@ -17,7 +17,7 @@ def test_get_dependency_key(dependency, key):
     assert get_dependency_key(dependency) == key
 
 
-class SingletonTests:
+class SingletonResolverTests:
     """Singleton resolver class tests"""
 
     @staticmethod
@@ -78,6 +78,46 @@ class FunctionResolverTests:
         resolver = FunctionResolver(lambda c, p=None: value)
 
         assert resolver.resolve(container) == value
+
+
+class TypeResolverTests:
+    """Type resolver class tests"""
+
+    @staticmethod
+    @mark.parametrize('def_value, def_param, value, param', [
+        (1, None, 2, SingletonResolver),
+        ({}, SingletonResolver, {'key': 1}, None),
+        ([], 1, ['value'], 'parameter')
+    ])
+    def tests_adds_type_for_parameter(def_value, def_param, value, param):
+        """should add single value for parameter"""
+        resolver = SingletonResolver(def_value, def_param)
+
+        resolver.add_value(value, param)
+
+        assert resolver.resolve(Mock(), def_param) == def_value
+        assert resolver.resolve(Mock(), param) == value
+
+    @staticmethod
+    @mark.parametrize('value, param', [
+        (2, SingletonResolver),
+        ({'key': 1}, None),
+        (['value'], 'parameter')
+    ])
+    def tests_add_raises_for_exiting_parameter(value, param):
+        """should raise error for adding existing param"""
+        resolver = SingletonResolver(value, param)
+
+        with raises(DependencyError):
+            resolver.add_value(value, param)
+
+    @staticmethod
+    @mark.parametrize('param', [SingletonResolver, None, 'parameter'])
+    def test_resolve_raises_for_unknown_param(param):
+        resolver = SingletonResolver()
+
+        with raises(DependencyError):
+            resolver.resolve(param)
 
 
 @fixture
@@ -326,6 +366,24 @@ def test_add_resolve_function(dependency, function):
         resolver = container.get_resolver(dependency)
         assert isinstance(resolver, FunctionResolver)
         assert resolver.resolve(container) == function(container)
+
+
+class TestType:
+    pass
+
+
+@mark.parametrize('dependency, type_', [
+    (TestType, TestType)
+])
+def test_add_type(dependency, type_):
+    """add_type() should add type resolver to current container"""
+    with make_default('test_add_resolve_function') as container:
+        add_type(dependency, TestType)
+        resolver = container.get_resolver(dependency)
+
+        actual = resolver.resolve(container)
+
+        assert isinstance(actual, type_)
 
 
 @mark.parametrize('dependency, resolver', [
