@@ -74,7 +74,7 @@ class FunctionResolverTests:
     @mark.parametrize('value', ['value', None, 1])
     def test_returns_dependency(value):
         """resolve() should call passed function with resolve parameters"""
-        func, container = Mock(), Mock()
+        container = Mock()
         resolver = FunctionResolver(lambda c, p=None: value)
 
         assert resolver.resolve(container) == value
@@ -199,12 +199,13 @@ class ContainerCopyTests:
 
         assert actual.resolve(dependency) == value
 
+    @staticmethod
     @mark.parametrize('source_name, expected_name', [
         ('', '_copy'),
         ('name', 'name_copy'),
         ('another name', 'another name_copy')
     ])
-    def test_copy_sets_name(self, source_name, expected_name):
+    def test_copy_sets_name(source_name, expected_name):
         """copy() should return new Container with same dependencies"""
         container = Container.get() if source_name == '' else Container(source_name)
 
