@@ -1,9 +1,17 @@
 from unittest.mock import Mock
 
-from pytest import mark
+from pytest import mark, fixture
 
-from injectool import inject, register_single, dependency, Scope, register
-from injectool import get_dependency_key, Container, resolve
+from injectool.core import make_default, Container, get_dependency_key, add_singleton, add_resolve_function
+from injectool.injection import inject, dependency
+
+
+@fixture
+def inject_fixture():
+    name = 'test_container'
+    Container._containers.pop(name, None)
+    with make_default(name) as container:
+        yield container
 
 
 @mark.parametrize('dep, key', [
@@ -12,17 +20,16 @@ from injectool import get_dependency_key, Container, resolve
     (Container, 'Container')
 ])
 def test_inject(dep, key):
-    """should inject dependencies as optional parameters"""
+    """should inject dependencies as optional parameters using default container"""
 
     @inject(dep)
     def get_implementation(**kwargs):
         return kwargs[key]
 
-    with Scope('test_inject'):
-        value = object()
-        register_single(dep, value)
+    value = object()
+    add_singleton(dep, value)
 
-        assert get_implementation() == value
+    assert get_implementation() == value
 
 
 @dependency()
@@ -51,22 +58,8 @@ def get_interface():
 ])
 def test_dependency(dep, key):
     implementation = Mock()
-    register(key, lambda: implementation)
+    add_resolve_function(key, lambda c, param=None: implementation)
 
     dep()
 
     assert implementation.called
-
-
-@mark.parametrize('dep, key, param', [
-    ('key', 'key', None),
-    (get_dependency_key, 'get_dependency_key', Container),
-    (Container, 'Container', 'parameter')
-])
-def test_resolve(dep, key, param):
-    """should return resolved dependency in current scope"""
-    with Scope('test_resolve'):
-        value = object()
-        register_single(dep, value, param)
-
-        assert resolve(dep, param) == value
