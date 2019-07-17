@@ -1,6 +1,6 @@
 # Changelog
 
-## Dev
+## 1.1.0
 
 - Added resolvers
 - Added Resolver class. Container is refactored to use Resolver class
