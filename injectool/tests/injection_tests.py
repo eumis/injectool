@@ -2,9 +2,8 @@ from unittest.mock import Mock
 
 from pytest import mark, fixture
 
-from injectool import inject, register_single, dependency, Scope, register
-from injectool import get_dependency_key, Container, resolve
-from injectool.core import make_default
+from injectool.core import make_default, Container, get_dependency_key, add_singleton, add_resolve_function
+from injectool.injection import inject, dependency
 
 
 @fixture
@@ -28,7 +27,7 @@ def test_inject(dep, key):
         return kwargs[key]
 
     value = object()
-    register_single(dep, value)
+    add_singleton(dep, value)
 
     assert get_implementation() == value
 
@@ -59,22 +58,8 @@ def get_interface():
 ])
 def test_dependency(dep, key):
     implementation = Mock()
-    register(key, lambda: implementation)
+    add_resolve_function(key, lambda c, param=None: implementation)
 
     dep()
 
     assert implementation.called
-
-
-@mark.parametrize('dep, key, param', [
-    ('key', 'key', None),
-    (get_dependency_key, 'get_dependency_key', Container),
-    (Container, 'Container', 'parameter')
-])
-def test_resolve(dep, key, param):
-    """should return resolved dependency from default container"""
-    with make_default('test_resolve'):
-        value = object()
-        register_single(dep, value, param)
-
-        assert resolve(dep, param) == value

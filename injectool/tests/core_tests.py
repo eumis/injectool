@@ -1,7 +1,11 @@
+from unittest.mock import Mock, call
+
 from pytest import raises, mark, fixture, fail
 
-from injectool import Container, DependencyError, Scope, get_dependency_key
-from injectool.core import make_default
+from injectool import Container, DependencyError, Scope
+from injectool.core import make_default, SingletonResolver, FunctionResolver, add, add_singleton, add_resolve_function, \
+    resolve
+from injectool.core import get_dependency_key
 
 
 @mark.parametrize('dependency, key', [
@@ -12,6 +16,69 @@ from injectool.core import make_default
 def test_get_dependency_key(dependency, key):
     """get_dependency_key() should return __name__ for class or function"""
     assert get_dependency_key(dependency) == key
+
+
+class SingletonTests:
+    """Singleton resolver class tests"""
+
+    @staticmethod
+    @mark.parametrize('def_value, def_param, value, param', [
+        (1, None, 2, SingletonResolver),
+        ({}, SingletonResolver, {'key': 1}, None),
+        ([], 1, ['value'], 'parameter')
+    ])
+    def tests_adds_value_for_parameter(def_value, def_param, value, param):
+        """should add single value for parameter"""
+        resolver = SingletonResolver(def_value, def_param)
+
+        resolver.add_value(value, param)
+
+        assert resolver.resolve(Mock(), def_param) == def_value
+        assert resolver.resolve(Mock(), param) == value
+
+    @staticmethod
+    @mark.parametrize('value, param', [
+        (2, SingletonResolver),
+        ({'key': 1}, None),
+        (['value'], 'parameter')
+    ])
+    def tests_add_raises_for_exiting_parameter(value, param):
+        """should raise error for adding existing param"""
+        resolver = SingletonResolver(value, param)
+
+        with raises(DependencyError):
+            resolver.add_value(value, param)
+
+    @staticmethod
+    @mark.parametrize('param', [SingletonResolver, None, 'parameter'])
+    def test_resolve_raises_for_unknown_param(param):
+        resolver = SingletonResolver()
+
+        with raises(DependencyError):
+            resolver.resolve(param)
+
+
+class FunctionResolverTests:
+    """FunctionResolver class tests"""
+
+    @staticmethod
+    def test_calls_passed_function():
+        """resolve() should call passed function with resolve parameters"""
+        func, container, param = Mock(), Mock(), Mock()
+        resolver = FunctionResolver(func)
+
+        resolver.resolve(container, param)
+
+        assert func.call_args == call(container, param)
+
+    @staticmethod
+    @mark.parametrize('value', ['value', None, 1])
+    def test_returns_dependency(value):
+        """resolve() should call passed function with resolve parameters"""
+        func, container = Mock(), Mock()
+        resolver = FunctionResolver(lambda c, p=None: value)
+
+        assert resolver.resolve(container) == value
 
 
 @fixture
@@ -62,75 +129,76 @@ class ContainerTests:
 
 
 @mark.usefixtures('container_fixture')
-class ContainerRegisterTests:
+class ContainerAddResolverTests:
+    @mark.parametrize('dependency, resolver', [
+        ('key', Mock()),
+        (get_dependency_key, SingletonResolver),
+        (Scope, FunctionResolver)
+    ])
+    def test_add(self, dependency, resolver):
+        """Container should set resolver for dependency"""
+        self.container.add(dependency, resolver)
+
+        assert self.container.get_resolver(dependency) == resolver
+
+    @mark.parametrize('dependency, resolver, last_resolver', [
+        ('key', Mock(), FunctionResolver),
+        (get_dependency_key, SingletonResolver, Mock()),
+        (Scope, FunctionResolver, SingletonResolver)
+    ])
+    def test_last_resolver(self, dependency, resolver, last_resolver):
+        """Container should overwrite resolver for same dependency"""
+        self.container.add(dependency, resolver)
+        self.container.add(dependency, last_resolver)
+
+        assert self.container.get_resolver(dependency) == last_resolver
+
+    @mark.parametrize('dependency', ['key', get_dependency_key, Scope])
+    def test_get_resolver_returns_none(self, dependency):
+        """get_resolver() should return none for not existent dependency"""
+        assert self.container.get_resolver(dependency) is None
+
+
+@mark.usefixtures('container_fixture')
+class ContainerResolveTests:
     @mark.parametrize('dependency, param', [
         ('key', None),
         (get_dependency_key, 'param'),
         (Scope, None)
     ])
-    def test_register(self, dependency, param):
-        """Container should register dependencies"""
-        value = object()
+    def test_resolve_uses_resolver(self, dependency, param):
+        """resolve() should return resolver result"""
+        result = Mock()
+        resolver = Mock(resolve=Mock())
+        resolver.resolve.side_effect = lambda c, p: result
+        self.container.add(dependency, resolver)
 
-        self.container.register(dependency, lambda: value, param)
+        actual = self.container.resolve(dependency, param)
 
-        assert self.container.resolve(dependency, param) == value
+        assert resolver.resolve.call_args == call(self.container, param)
+        assert actual == result
 
-    @mark.parametrize('dependency, param', [
-        ('key', None),
-        (get_dependency_key, 'param'),
-        (Scope, None)
-    ])
-    def test_last_dependency(self, dependency, param):
-        """register() should overwrite dependency"""
-        value = object()
-        last_value = object()
-
-        self.container.register(dependency, lambda: value, param)
-        self.container.register(dependency, lambda: last_value, param)
-
-        assert self.container.resolve(dependency, param) == last_value
-
-    @mark.parametrize('dependency, resolver, param', [
-        ('key', {}, None),
-        (get_dependency_key, object(), 'param'),
-        (Scope, 2, None)
-    ])
-    def test_register_raises(self, dependency, resolver, param):
-        """register() should raise error if initializer is not callable"""
-        with raises(DependencyError):
-            self.container.register(dependency, resolver, param)
-
-    @mark.parametrize('dependency, param', [
-        ('key', None),
-        (get_dependency_key, 'param'),
-        (Scope, None)
-    ])
-    def test_resolve_raises(self, dependency, param):
+    @mark.parametrize('dependency', ['key', get_dependency_key, Scope])
+    def test_resolve_raises(self, dependency):
         """resolve() should raise exception for not existent dependency"""
         with raises(DependencyError):
-            self.container.resolve(dependency, param)
-
-    def test_self_registration(self, ):
-        """Container should register himself with key "Container"""
-        assert self.container.resolve(Container) == self.container
+            self.container.resolve(dependency)
 
 
 @mark.usefixtures('container_fixture')
 class ContainerCopyTests:
-    @mark.parametrize('dependency, param', [
-        ('key', None),
-        (get_dependency_key, 'param'),
-        (Scope, None)
+    @mark.parametrize('dependency, value', [
+        ('key', lambda: None),
+        (get_dependency_key, 1),
+        (Scope, 'value')
     ])
-    def test_copy(self, dependency, param):
+    def test_copy(self, dependency, value):
         """copy() should return new Container with same dependencies"""
-        value = object()
-        self.container.register(dependency, lambda: value, param)
+        self.container.add(dependency, SingletonResolver(value))
 
         actual = self.container.copy()
 
-        assert actual.resolve(dependency, param) == value
+        assert actual.resolve(dependency) == value
 
     @mark.parametrize('source_name, expected_name', [
         ('', '_copy'),
@@ -152,35 +220,29 @@ class ContainerCopyTests:
 
         assert actual.name == name
 
-    @mark.parametrize('dependency, param', [
-        ('key', None),
-        (get_dependency_key, 'param'),
-        (Scope, None)
+    @mark.parametrize('dependency, value', [
+        ('key', lambda: None),
+        (get_dependency_key, 1),
+        (Scope, 'value')
     ])
-    def test_copy_uses_only_current_dependencies(self, dependency, param):
+    def test_copy_uses_only_current_dependencies(self, dependency, value):
         """copy() should return new Container with same dependencies"""
-        actual = self.container.copy()
-        value = object()
-        self.container.register(dependency, lambda: value, param)
+        copy = self.container.copy()
+
+        self.container.add(dependency, SingletonResolver(value))
 
         with raises(DependencyError):
-            assert actual.resolve(dependency, param)
+            assert copy.resolve(dependency)
 
-    def test_copy_registers_self(self):
-        """copy() should return new Container with same dependencies"""
-        actual = self.container.copy()
-
-        assert actual.resolve(Container) == actual
-
-    def test_copy_for_new_dependencies(self, ):
+    def test_copy_for_new_dependencies(self):
         """dependencies for copied container does not affect parent"""
-        self.container.register('value', lambda: 0)
+        self.container.add('value', SingletonResolver(0))
+        copy = self.container.copy()
 
-        actual = self.container.copy()
-        actual.register('value', lambda: 1)
+        copy.add('value', SingletonResolver(1))
 
         assert self.container.resolve('value') == 0
-        assert actual.resolve('value') == 1
+        assert copy.resolve('value') == 1
 
 
 @mark.usefixtures('container_fixture')
@@ -222,3 +284,57 @@ class MakeDefaultTests:
                 assert Container.get() == next_container
             assert Container.get() == previous_container
         assert Container.get() == default_container
+
+
+@mark.parametrize('dependency, resolver', [
+    ('key', FunctionResolver(lambda: 'value')),
+    (get_dependency_key, SingletonResolver(1)),
+    (Scope, Mock())
+])
+def test_add(dependency, resolver):
+    """add() should add dependency resolver to current container"""
+    with make_default('test_add') as container:
+        add(dependency, resolver)
+
+        assert container.get_resolver(dependency) == resolver
+
+
+@mark.parametrize('dependency, value', [
+    ('key', lambda c, param=None: 'value'),
+    (get_dependency_key, 1),
+    (Scope, Mock())
+])
+def test_add_singleton(dependency, value):
+    """add_singleton() should add SingletonResolver to current container"""
+    with make_default('test_add_singleton') as container:
+        add_singleton(dependency, value)
+
+        resolver = container.get_resolver(dependency)
+        assert isinstance(resolver, SingletonResolver)
+        assert resolver.resolve(container) == value
+
+
+@mark.parametrize('dependency, function', [
+    ('key', lambda c, p=None: 'value'),
+    (get_dependency_key, lambda c, p=None: 1)
+])
+def test_add_resolve_function(dependency, function):
+    """add_function() should add FunctionResolver to current container"""
+    with make_default('test_add_resolve_function') as container:
+        add_resolve_function(dependency, function)
+
+        resolver = container.get_resolver(dependency)
+        assert isinstance(resolver, FunctionResolver)
+        assert resolver.resolve(container) == function(container)
+
+
+@mark.parametrize('dependency, resolver', [
+    ('key', FunctionResolver(lambda c, param=None: 'value')),
+    (get_dependency_key, SingletonResolver(1))
+])
+def test_resolve(dependency, resolver):
+    """resolve() should resolve dependency using current container"""
+    with make_default('test_resolve') as container:
+        add(dependency, resolver)
+
+        assert resolve(dependency) == container.resolve(dependency)

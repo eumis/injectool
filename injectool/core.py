@@ -20,6 +20,36 @@ class Resolver:
         """Factory method for resolving dependency"""
 
 
+class SingletonResolver(Resolver):
+    """Singleton resolver"""
+
+    def __init__(self, value: Any = None, param: Any = None):
+        self._values = {}
+        if value is not None:
+            self.add_value(value, param)
+
+    def add_value(self, value: Any, param: Any):
+        if param in self._values:
+            raise DependencyError(f'Singleton value for parameter {param} is already added')
+        self._values[param] = value
+
+    def resolve(self, container: 'Container', param: Any = None):
+        try:
+            return self._values[param]
+        except KeyError:
+            raise DependencyError(f'Singleton value for parameter {param} is not found')
+
+
+class FunctionResolver(Resolver):
+    """Function resolver"""
+
+    def __init__(self, resolve_: Callable[['Container', Any], Any]):
+        self._resolve = resolve_
+
+    def resolve(self, container: 'Container', param: Any = None):
+        return self._resolve(container, param)
+
+
 class Container:
     """Container for dependencies"""
 
@@ -32,44 +62,34 @@ class Container:
         Container._containers[name] = self
         self._name: str = name
         self._resolvers: dict = {}
-        self._factories: dict = {}
-        self.register(Container, lambda: self)
 
     @property
     def name(self) -> str:
         return self._name
 
-    def register(self, dependency: Union[str, Callable], resolver: Callable[[], Any], param=None):
+    def add(self, dependency: Union[str, Callable], resolver: Resolver):
         """Add resolver to container"""
-        if not callable(resolver):
-            raise DependencyError('Initializer {0} is not callable'.format(resolver))
-
         key = get_dependency_key(dependency)
-        if key not in self._resolvers:
-            self._resolvers[key] = {}
+        self._resolvers[key] = resolver
 
-        self._resolvers[key][param] = resolver
-
-    def get_resolver(self, dependency: Union[str, Callable]) -> Resolver:
-        pass
-
-    def resolve(self, dependency: Union[str, Callable], param=None) -> Any:
+    def resolve(self, dependency: Union[str, Callable], param: Any = None) -> Any:
         """Resolve dependency"""
         key = get_dependency_key(dependency)
         try:
-            return self._resolvers[key][param]()
+            resolver = self._resolvers[key]
+            return resolver.resolve(self, param)
         except KeyError:
-            if key in self._factories:
-                return self._factories[key](param)
             raise DependencyError('Dependency "{0}" is not found'.format(key))
+
+    def get_resolver(self, dependency: Union[str, Callable]) -> Resolver:
+        key = get_dependency_key(dependency)
+        return self._resolvers.get(key, None)
 
     def copy(self, name: str = None) -> 'Container':
         """returns new container with same dependencies"""
         name = self.name + '_copy' if name is None else name
         new = Container(name)
-        new._factories = deepcopy(self._factories)
         new._resolvers = deepcopy(self._resolvers)
-        new.register(Container, lambda: new)
         return new
 
     @staticmethod
@@ -103,3 +123,23 @@ def make_default(container_name: str) -> Container:
         yield container
     finally:
         Container._set_default(default)
+
+
+def add(dependency: Union[str, Callable], resolver: Resolver):
+    """Adds resolver to current container"""
+    Container.get().add(dependency, resolver)
+
+
+def add_singleton(dependency: Union[str, Callable], value: Any):
+    """Adds singleton value to current container"""
+    Container.get().add(dependency, SingletonResolver(value))
+
+
+def add_resolve_function(dependency: Union[str, Callable], resolve_: Callable[['Container', Any], Any]):
+    """Adds function resolver to current container"""
+    Container.get().add(dependency, FunctionResolver(resolve_))
+
+
+def resolve(dependency: Union[str, Callable], param: Any = None):
+    """resolves dependency in current container"""
+    return Container.get().resolve(dependency, param)

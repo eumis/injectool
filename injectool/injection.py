@@ -1,14 +1,9 @@
 """Injection functionality"""
 
 from functools import wraps
-from typing import List, Union, Any, Callable
+from typing import List, Union, Callable
 
-from injectool.core import get_dependency_key, Container
-
-
-def resolve(dep: Union[str, Callable], param: Any = None):
-    """resolves dependency in default container"""
-    return Container.get().resolve(dep, param)
+from injectool.core import get_dependency_key, resolve
 
 
 def inject(*dependencies: List[Union[str, Callable]]):
