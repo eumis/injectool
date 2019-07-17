@@ -125,7 +125,7 @@ def make_default(container_name: str) -> Container:
         Container._set_default(default)
 
 
-def add(dependency: Union[str, Callable], resolver: Resolver):
+def add_resolver(dependency: Union[str, Callable], resolver: Resolver):
     """Adds resolver to current container"""
     Container.get().add(dependency, resolver)
 

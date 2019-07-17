@@ -4,7 +4,7 @@ from pytest import raises, mark, fixture, fail
 
 from injectool import Container, DependencyError
 from injectool.core import get_dependency_key, SingletonResolver, FunctionResolver, add_type
-from injectool.core import make_default, add, add_singleton, add_resolve_function, resolve
+from injectool.core import make_default, add_resolver, add_singleton, add_resolve_function, resolve
 
 
 @mark.parametrize('dependency, key', [
@@ -331,10 +331,10 @@ class MakeDefaultTests:
     (get_dependency_key, SingletonResolver(1)),
     (Container, Mock())
 ])
-def test_add(dependency, resolver):
-    """add() should add dependency resolver to current container"""
+def test_add_resolver(dependency, resolver):
+    """add_resolver() should add dependency resolver to current container"""
     with make_default('test_add') as container:
-        add(dependency, resolver)
+        add_resolver(dependency, resolver)
 
         assert container.get_resolver(dependency) == resolver
 
@@ -393,6 +393,6 @@ def test_add_type(dependency, type_):
 def test_resolve(dependency, resolver):
     """resolve() should resolve dependency using current container"""
     with make_default('test_resolve') as container:
-        add(dependency, resolver)
+        add_resolver(dependency, resolver)
 
         assert resolve(dependency) == container.resolve(dependency)

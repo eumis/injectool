@@ -1,5 +1,10 @@
 # Changelog
 
+
+## 1.1.1
+
+- add is renamed to add_resolver
+
 ## 1.1.0
 
 - Added resolvers
