@@ -2,10 +2,9 @@ from unittest.mock import Mock, call
 
 from pytest import raises, mark, fixture, fail
 
-from injectool import Container, DependencyError, Scope
-from injectool.core import make_default, SingletonResolver, FunctionResolver, add, add_singleton, add_resolve_function, \
-    resolve
-from injectool.core import get_dependency_key
+from injectool import Container, DependencyError
+from injectool.core import get_dependency_key, SingletonResolver, FunctionResolver
+from injectool.core import make_default, add, add_singleton, add_resolve_function, resolve
 
 
 @mark.parametrize('dependency, key', [
@@ -133,7 +132,7 @@ class ContainerAddResolverTests:
     @mark.parametrize('dependency, resolver', [
         ('key', Mock()),
         (get_dependency_key, SingletonResolver),
-        (Scope, FunctionResolver)
+        (Container, FunctionResolver)
     ])
     def test_add(self, dependency, resolver):
         """Container should set resolver for dependency"""
@@ -144,7 +143,7 @@ class ContainerAddResolverTests:
     @mark.parametrize('dependency, resolver, last_resolver', [
         ('key', Mock(), FunctionResolver),
         (get_dependency_key, SingletonResolver, Mock()),
-        (Scope, FunctionResolver, SingletonResolver)
+        (Container, FunctionResolver, SingletonResolver)
     ])
     def test_last_resolver(self, dependency, resolver, last_resolver):
         """Container should overwrite resolver for same dependency"""
@@ -153,7 +152,7 @@ class ContainerAddResolverTests:
 
         assert self.container.get_resolver(dependency) == last_resolver
 
-    @mark.parametrize('dependency', ['key', get_dependency_key, Scope])
+    @mark.parametrize('dependency', ['key', get_dependency_key, Container])
     def test_get_resolver_returns_none(self, dependency):
         """get_resolver() should return none for not existent dependency"""
         assert self.container.get_resolver(dependency) is None
@@ -164,7 +163,7 @@ class ContainerResolveTests:
     @mark.parametrize('dependency, param', [
         ('key', None),
         (get_dependency_key, 'param'),
-        (Scope, None)
+        (Container, None)
     ])
     def test_resolve_uses_resolver(self, dependency, param):
         """resolve() should return resolver result"""
@@ -178,7 +177,7 @@ class ContainerResolveTests:
         assert resolver.resolve.call_args == call(self.container, param)
         assert actual == result
 
-    @mark.parametrize('dependency', ['key', get_dependency_key, Scope])
+    @mark.parametrize('dependency', ['key', get_dependency_key, Container])
     def test_resolve_raises(self, dependency):
         """resolve() should raise exception for not existent dependency"""
         with raises(DependencyError):
@@ -190,7 +189,7 @@ class ContainerCopyTests:
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
         (get_dependency_key, 1),
-        (Scope, 'value')
+        (Container, 'value')
     ])
     def test_copy(self, dependency, value):
         """copy() should return new Container with same dependencies"""
@@ -223,7 +222,7 @@ class ContainerCopyTests:
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
         (get_dependency_key, 1),
-        (Scope, 'value')
+        (Container, 'value')
     ])
     def test_copy_uses_only_current_dependencies(self, dependency, value):
         """copy() should return new Container with same dependencies"""
@@ -289,7 +288,7 @@ class MakeDefaultTests:
 @mark.parametrize('dependency, resolver', [
     ('key', FunctionResolver(lambda: 'value')),
     (get_dependency_key, SingletonResolver(1)),
-    (Scope, Mock())
+    (Container, Mock())
 ])
 def test_add(dependency, resolver):
     """add() should add dependency resolver to current container"""
@@ -302,7 +301,7 @@ def test_add(dependency, resolver):
 @mark.parametrize('dependency, value', [
     ('key', lambda c, param=None: 'value'),
     (get_dependency_key, 1),
-    (Scope, Mock())
+    (Container, Mock())
 ])
 def test_add_singleton(dependency, value):
     """add_singleton() should add SingletonResolver to current container"""
