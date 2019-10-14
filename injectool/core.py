@@ -146,15 +146,15 @@ def add_singleton(dependency: Union[str, Callable], value: Any):
     Container.get().add(dependency, SingletonResolver(value))
 
 
-def add_resolve_function(dependency: Union[str, Callable],
-                         resolve_: Callable[['Container', Any], Any]):
+def add_function_resolver(dependency: Union[str, Callable],
+                          resolve_: Callable[['Container', Any], Any]):
     """Adds function resolver to current container"""
     Container.get().add(dependency, FunctionResolver(resolve_))
 
 
 def add_type(dependency: Union[str, Callable], type_: Type):
     """Adds type resolver to current container"""
-    add_resolve_function(dependency, lambda c, p=None: type_())
+    add_function_resolver(dependency, lambda c, p=None: type_())
 
 
 def resolve(dependency: Union[str, Callable], param: Any = None):

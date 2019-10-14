@@ -4,7 +4,7 @@ from pytest import raises, mark, fixture, fail
 
 from injectool import Container, DependencyError
 from injectool.core import get_dependency_key, SingletonResolver, FunctionResolver, add_type
-from injectool.core import make_default, add_resolver, add_singleton, add_resolve_function, resolve
+from injectool.core import make_default, add_resolver, add_singleton, add_function_resolver, resolve
 
 
 @mark.parametrize('dependency, key', [
@@ -358,10 +358,10 @@ def test_add_singleton(dependency, value):
     ('key', lambda c, p=None: 'value'),
     (get_dependency_key, lambda c, p=None: 1)
 ])
-def test_add_resolve_function(dependency, function):
-    """add_function() should add FunctionResolver to current container"""
+def test_add_function_resolver(dependency, function):
+    """should add FunctionResolver to current container"""
     with make_default('test_add_resolve_function') as container:
-        add_resolve_function(dependency, function)
+        add_function_resolver(dependency, function)
 
         resolver = container.get_resolver(dependency)
         assert isinstance(resolver, FunctionResolver)

@@ -3,6 +3,7 @@
 ## Dev
 
 - @dependency uses own implementation by default
+- add_resolve_function is renamed to add_function_resolver
 
 ## 1.1.1
 
