@@ -3,5 +3,5 @@
 __version__ = '1.1.1'
 
 from .core import DependencyError, Container, SingletonResolver, FunctionResolver
-from injectool.core import make_default, add_resolver, add_singleton, add_resolve_function, resolve
-from injectool.injection import inject, dependency
+from .core import make_default, add_resolver, add_singleton, add_function_resolver, resolve
+from .injection import inject, dependency
