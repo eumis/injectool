@@ -29,12 +29,10 @@ class SingletonResolver(Resolver):
     def __init__(self, value: Any = None, param: Any = None):
         self._values = {}
         if value is not None:
-            self.add_value(value, param)
+            self.set_value(value, param)
 
-    def add_value(self, value: Any, param: Any):
-        """Adds value for parameter"""
-        if param in self._values:
-            raise DependencyError(f'Singleton value for parameter {param} is already added')
+    def set_value(self, value: Any, param: Any):
+        """Sets value for parameter"""
         self._values[param] = value
 
     def resolve(self, container: 'Container', param: Any = None):
