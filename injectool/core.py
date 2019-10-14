@@ -11,10 +11,13 @@ class DependencyError(Exception):
 
 
 def get_dependency_key(dependency: Union[str, Callable]) -> str:
+    """returns string key for passed dependency"""
     return dependency if isinstance(dependency, str) else dependency.__name__
 
 
 class Resolver:
+    """Interface for resolver"""
+
     @abstractmethod
     def resolve(self, container: 'Container', param: Any = None):
         """Factory method for resolving dependency"""
@@ -29,6 +32,7 @@ class SingletonResolver(Resolver):
             self.add_value(value, param)
 
     def add_value(self, value: Any, param: Any):
+        """Adds value for parameter"""
         if param in self._values:
             raise DependencyError(f'Singleton value for parameter {param} is already added')
         self._values[param] = value
@@ -65,6 +69,7 @@ class Container:
 
     @property
     def name(self) -> str:
+        """Returns container's name"""
         return self._name
 
     def add(self, dependency: Union[str, Callable], resolver: Resolver):
@@ -82,6 +87,7 @@ class Container:
             raise DependencyError('Dependency "{0}" is not found'.format(key))
 
     def get_resolver(self, dependency: Union[str, Callable]) -> Resolver:
+        """returns resolver for dependency"""
         key = get_dependency_key(dependency)
         return self._resolvers.get(key, None)
 
@@ -94,6 +100,7 @@ class Container:
 
     @staticmethod
     def get(name: str = None) -> 'Container':
+        """Returns container by name or default if name is None"""
         try:
             return Container._get_default() if name is None else Container._containers[name]
         except KeyError:
@@ -113,6 +120,10 @@ Container('')
 
 @contextmanager
 def make_default(container_name: str) -> Container:
+    """
+    Makes container with provided name default.
+    Creates new if container doesn't exist.
+    """
     try:
         container = Container.get(container_name)
     except DependencyError:
@@ -135,7 +146,8 @@ def add_singleton(dependency: Union[str, Callable], value: Any):
     Container.get().add(dependency, SingletonResolver(value))
 
 
-def add_resolve_function(dependency: Union[str, Callable], resolve_: Callable[['Container', Any], Any]):
+def add_resolve_function(dependency: Union[str, Callable],
+                         resolve_: Callable[['Container', Any], Any]):
     """Adds function resolver to current container"""
     Container.get().add(dependency, FunctionResolver(resolve_))
 

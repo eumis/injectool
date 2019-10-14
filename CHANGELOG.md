@@ -1,5 +1,8 @@
 # Changelog
 
+## Dev
+
+- @dependency uses own implementation by default
 
 ## 1.1.1
 

@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 injectool = {editable = true,path = "."}
 pytest = "*"
+pylint = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3"
