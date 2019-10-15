@@ -1,9 +1,10 @@
 # Changelog
 
-## Dev
+## 1.1.2
 
 - @dependency uses own implementation by default
 - add_resolve_function is renamed to add_function_resolver
+- SingletonResolver.add_value() is changed to set_value()
 
 ## 1.1.1
 

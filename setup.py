@@ -36,9 +36,9 @@ _HERE = dirname(__file__)
 
 
 def _get_version() -> str:
-    with open(join_path(_HERE, "injectool", "__init__.py")) as f:
+    with open(join_path(_HERE, "injectool", "__init__.py")) as file:
         pattern = re.compile(r"__version__ = '(.*)'")
-        match = pattern.search(f.read())
+        match = pattern.search(file.read())
         return match.group(1)
 
 
