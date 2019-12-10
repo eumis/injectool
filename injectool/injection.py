@@ -14,8 +14,10 @@ def inject(*dependencies: List[Union[str, Callable]], **name_to_dependency):
 
     def _decorate(func):
         keys = [get_dependency_key(dep) for dep in dependencies]
-        name_to_key = {**{key: key for key in keys},
-                       **{name: get_dependency_key(dep) for name, dep in name_to_dependency.items()}}
+        name_to_key = {
+            **{key: key for key in keys},
+            **{name: get_dependency_key(dep) for name, dep in name_to_dependency.items()}
+        }
 
         @wraps(func)
         def _decorated(*args, **kwargs):
