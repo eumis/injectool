@@ -1,5 +1,12 @@
 # Changelog
 
+## dev
+
+- current container is stored to context var
+- removed container name and storing all containers
+- make_default is renamed to use_container
+- Resolvers are moved to resolvers module
+
 ## 1.1.2
 
 - @dependency uses own implementation by default

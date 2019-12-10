@@ -2,14 +2,14 @@ from unittest.mock import Mock
 
 from pytest import mark, fixture
 
-from injectool.core import make_default, Container, get_dependency_key, add_singleton
+from injectool.core import use_container, Container, get_dependency_key
 from injectool.injection import inject, dependency
+from injectool.resolvers import add_singleton
 
 
 @fixture
 def inject_fixture():
-    name = 'inject_tests'
-    with make_default(name) as container:
+    with use_container() as container:
         yield container
 
 

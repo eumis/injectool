@@ -1,9 +1,10 @@
 """Core functionality"""
 
+from contextvars import ContextVar
 from abc import abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, Callable, Union, Type
+from typing import Any, Callable, Union
 
 
 class DependencyError(Exception):
@@ -23,55 +24,14 @@ class Resolver:
         """Factory method for resolving dependency"""
 
 
-class SingletonResolver(Resolver):
-    """Singleton resolver"""
-
-    def __init__(self, value: Any = None, param: Any = None):
-        self._values = {}
-        if value is not None:
-            self.set_value(value, param)
-
-    def set_value(self, value: Any, param: Any):
-        """Sets value for parameter"""
-        self._values[param] = value
-
-    def resolve(self, container: 'Container', param: Any = None):
-        try:
-            return self._values[param]
-        except KeyError:
-            raise DependencyError(f'Singleton value for parameter {param} is not found')
-
-
-class FunctionResolver(Resolver):
-    """Function resolver"""
-
-    def __init__(self, resolve_: Callable[['Container', Any], Any]):
-        self._resolve = resolve_
-
-    def resolve(self, container: 'Container', param: Any = None):
-        return self._resolve(container, param)
-
-
 class Container:
     """Container for dependencies"""
 
-    _containers: dict = {}
-    _default: 'Container' = None
-
-    def __init__(self, name=''):
-        if name in Container._containers:
-            raise DependencyError(f'Container with name {name} already exist')
-        Container._containers[name] = self
-        self._name: str = name
+    def __init__(self):
         self._resolvers: dict = {}
 
-    @property
-    def name(self) -> str:
-        """Returns container's name"""
-        return self._name
-
-    def add(self, dependency: Union[str, Callable], resolver: Resolver):
-        """Add resolver to container"""
+    def set(self, dependency: Union[str, Callable], resolver: Resolver):
+        """Sets resolver for dependency"""
         key = get_dependency_key(dependency)
         self._resolvers[key] = resolver
 
@@ -89,72 +49,38 @@ class Container:
         key = get_dependency_key(dependency)
         return self._resolvers.get(key, None)
 
-    def copy(self, name: str = None) -> 'Container':
+    def copy(self) -> 'Container':
         """returns new container with same dependencies"""
-        name = self.name + '_copy' if name is None else name
-        new = Container(name)
+        new = Container()
         new._resolvers = deepcopy(self._resolvers)
         return new
 
-    @staticmethod
-    def get(name: str = None) -> 'Container':
-        """Returns container by name or default if name is None"""
-        try:
-            return Container._get_default() if name is None else Container._containers[name]
-        except KeyError:
-            raise DependencyError(f'Container {name} is not found')
 
-    @staticmethod
-    def _get_default() -> 'Container':
-        return Container._containers[''] if Container._default is None else Container._default
-
-    @staticmethod
-    def _set_default(container: 'Container'):
-        Container._default = container
+container_var = ContextVar('container')
 
 
-Container('')
+def set_container(container: Container):
+    container_var.set(container)
+
+
+def get_container() -> Container:
+    return container_var.get()
 
 
 @contextmanager
-def make_default(container_name: str) -> Container:
+def use_container(container: Container = None) -> Container:
     """
-    Makes container with provided name default.
+    Uses passed container for registering and resolving dependencies
     Creates new if container doesn't exist.
     """
-    try:
-        container = Container.get(container_name)
-    except DependencyError:
-        container = Container(container_name)
-    default = Container.get()
-    Container._set_default(container)
+    container = container if container else Container()
+    reset_token = container_var.set(container)
     try:
         yield container
     finally:
-        Container._set_default(default)
-
-
-def add_resolver(dependency: Union[str, Callable], resolver: Resolver):
-    """Adds resolver to current container"""
-    Container.get().add(dependency, resolver)
-
-
-def add_singleton(dependency: Union[str, Callable], value: Any):
-    """Adds singleton value to current container"""
-    Container.get().add(dependency, SingletonResolver(value))
-
-
-def add_function_resolver(dependency: Union[str, Callable],
-                          resolve_: Callable[['Container', Any], Any]):
-    """Adds function resolver to current container"""
-    Container.get().add(dependency, FunctionResolver(resolve_))
-
-
-def add_type(dependency: Union[str, Callable], type_: Type):
-    """Adds type resolver to current container"""
-    add_function_resolver(dependency, lambda c, p=None: type_())
+        container_var.reset(reset_token)
 
 
 def resolve(dependency: Union[str, Callable], param: Any = None):
-    """resolves dependency in current container"""
-    return Container.get().resolve(dependency, param)
+    """resolves dependency using"""
+    return get_container().resolve(dependency, param)
