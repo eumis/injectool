@@ -56,15 +56,17 @@ class Container:
         return new
 
 
-container_var = ContextVar('container')
+_CURRENT_CONTAINER = ContextVar('container')
 
 
 def set_container(container: Container):
-    container_var.set(container)
+    """Sets container used for resolving and registering dependencies"""
+    _CURRENT_CONTAINER.set(container)
 
 
 def get_container() -> Container:
-    return container_var.get()
+    """Returns container used for resolving and registering dependencies"""
+    return _CURRENT_CONTAINER.get()
 
 
 @contextmanager
@@ -74,13 +76,13 @@ def use_container(container: Container = None) -> Container:
     Creates new if container doesn't exist.
     """
     container = container if container else Container()
-    reset_token = container_var.set(container)
+    reset_token = _CURRENT_CONTAINER.set(container)
     try:
         yield container
     finally:
-        container_var.reset(reset_token)
+        _CURRENT_CONTAINER.reset(reset_token)
 
 
 def resolve(dependency: Union[str, Callable], param: Any = None):
-    """resolves dependency using"""
+    """resolves dependency"""
     return get_container().resolve(dependency, param)

@@ -1,3 +1,5 @@
+"""Dependency resolvers used by container"""
+
 from typing import Any, Callable, Union, Type
 
 from injectool.core import Resolver, DependencyError, Container, get_container
