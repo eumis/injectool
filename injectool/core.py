@@ -4,7 +4,7 @@ from contextvars import ContextVar
 from abc import abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, Callable, Union
+from typing import Any, Callable, Union, Dict
 
 
 class DependencyError(Exception):
@@ -27,8 +27,8 @@ class Resolver:
 class Container:
     """Container for dependencies"""
 
-    def __init__(self):
-        self._resolvers: dict = {}
+    def __init__(self, resolvers: Dict[str, Resolver] = None):
+        self._resolvers: Dict[str, Resolver] = {} if resolvers is None else resolvers
 
     def set(self, dependency: Union[str, Callable], resolver: Resolver):
         """Sets resolver for dependency"""
@@ -51,9 +51,8 @@ class Container:
 
     def copy(self) -> 'Container':
         """returns new container with same dependencies"""
-        new = Container()
-        new._resolvers = deepcopy(self._resolvers)
-        return new
+        resolvers = deepcopy(self._resolvers)
+        return Container(resolvers)
 
 
 _CURRENT_CONTAINER = ContextVar('container')
