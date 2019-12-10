@@ -32,6 +32,17 @@ class ContainerTests:
         (get_dependency_key, SingletonResolver),
         (Container, FunctionResolver)
     ])
+    def test_init_resolvers(self, dependency, resolver):
+        """Uses resolvers passed to __init__"""
+        container = Container({get_dependency_key(dependency): resolver})
+
+        assert container.get_resolver(dependency) == resolver
+
+    @mark.parametrize('dependency, resolver', [
+        ('key', Mock()),
+        (get_dependency_key, SingletonResolver),
+        (Container, FunctionResolver)
+    ])
     def test_set(self, dependency, resolver):
         """Container should set resolver for dependency"""
         self.container.set(dependency, resolver)
