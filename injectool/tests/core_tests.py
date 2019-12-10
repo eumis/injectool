@@ -33,7 +33,7 @@ class ContainerTests:
         (get_dependency_key, SingletonResolver),
         (Container, FunctionResolver)
     ])
-    def test_init_resolvers(self, dependency, resolver):
+    def test_init_resolvers(dependency, resolver):
         """Uses resolvers passed to __init__"""
         container = Container({get_dependency_key(dependency): resolver})
 
