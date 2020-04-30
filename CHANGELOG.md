@@ -1,6 +1,10 @@
 # Changelog
 
-## dev
+## 2.0.2
+
+- fixed default container
+
+## 2.0.1
 
 - current container is stored to context var
 - removed container name and storing all containers
