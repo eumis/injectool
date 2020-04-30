@@ -56,6 +56,7 @@ class Container:
 
 
 _CURRENT_CONTAINER = ContextVar('container')
+_CURRENT_CONTAINER.set(Container())
 
 
 def set_container(container: Container):
