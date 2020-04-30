@@ -13,3 +13,4 @@ pyvenv.cfg
 .vscode/.ropeproject/
 .idea/
 Pipfile.lock
+venv/
