@@ -21,10 +21,8 @@ def inject(*dependencies: List[Union[str, Callable]], **name_to_dependency):
 
         @wraps(func)
         def _decorated(*args, **kwargs):
-            args = list(args)
-            keys_to_inject = [(name, key) for name, key in name_to_key.items() if key not in kwargs]
-            for name, key in keys_to_inject:
-                kwargs[name] = resolve(key)
+            keys_to_inject = [(name, key) for name, key in name_to_key.items() if name not in kwargs]
+            kwargs = {**kwargs, **{name: resolve(key) for name, key in keys_to_inject}}
             return func(*args, **kwargs)
 
         return _decorated

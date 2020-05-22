@@ -22,7 +22,7 @@ class InjectTests:
         (Container, get_dependency_key('Container'))
     ])
     def test_inject_dependency(dep, key):
-        """should inject dependencies as optional parameters using default container"""
+        """should inject dependencies as optional parameters"""
 
         @inject(dep)
         def get_implementation(**kwargs):
@@ -34,13 +34,30 @@ class InjectTests:
         assert get_implementation() == value
 
     @staticmethod
+    @mark.parametrize('dep, key, parameter', [
+        ('key', get_dependency_key('key'), None),
+        (get_dependency_key, get_dependency_key(get_dependency_key), 'param'),
+        (Container, get_dependency_key(Container), object())
+    ])
+    def test_uses_passed_value(dep, key, parameter):
+        """should use passed value instead of inject it"""
+
+        @inject(dep)
+        def get_implementation(**kwargs):
+            return kwargs[key]
+
+        add_singleton(dep, object())
+
+        assert get_implementation(**{key: parameter}) == parameter
+
+    @staticmethod
     @mark.parametrize('dep, name', [
         ('key', 'key'),
         (get_dependency_key, 'dep_key'),
         (Container, 'con')
     ])
     def test_inject_dependency_with_name(dep, name):
-        """should inject dependencies as optional parameters using default container"""
+        """should inject dependencies as optional parameters with custom name"""
 
         @inject(**{name: dep})
         def get_implementation(**kwargs):
@@ -50,6 +67,23 @@ class InjectTests:
         add_singleton(dep, value)
 
         assert get_implementation() == value
+
+    @staticmethod
+    @mark.parametrize('dep, name, parameter', [
+        ('key', 'key', None),
+        (get_dependency_key, 'dep_key', 'value'),
+        (Container, 'con', object())
+    ])
+    def test_uses_passed_value_by_name(dep, name, parameter):
+        """should use passed value instead of inject it for custom names"""
+
+        @inject(**{name: dep})
+        def get_implementation(**kwargs):
+            return kwargs[name]
+
+        add_singleton(dep, object())
+
+        assert get_implementation(**{name: parameter}) == parameter
 
 
 @mark.usefixtures('inject_fixture')

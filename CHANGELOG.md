@@ -1,5 +1,9 @@
 # Changelog
 
+## Dev
+
+- fixed passing injected parameters
+
 ## 2.0.2
 
 - fixed default container
