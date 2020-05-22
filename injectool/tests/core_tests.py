@@ -11,7 +11,7 @@ from injectool.resolvers import SingletonResolver, FunctionResolver, add_resolve
 @mark.parametrize('dependency, key', [
     ('key', 'key'),
     (get_dependency_key, 'get_dependency_key'),
-    (Container, 'Container')
+    ('ContainerTest', 'ContainerTest')
 ])
 def test_get_dependency_key(dependency, key):
     """get_dependency_key() should return __name__ for class or function"""
@@ -31,7 +31,7 @@ class ContainerTests:
     @mark.parametrize('dependency, resolver', [
         ('key', Mock()),
         (get_dependency_key, SingletonResolver),
-        (Container, FunctionResolver)
+        ('ContainerTests', FunctionResolver)
     ])
     def test_init_resolvers(dependency, resolver):
         """Uses resolvers passed to __init__"""
@@ -42,7 +42,7 @@ class ContainerTests:
     @mark.parametrize('dependency, resolver', [
         ('key', Mock()),
         (get_dependency_key, SingletonResolver),
-        (Container, FunctionResolver)
+        ('ContainerTest', FunctionResolver)
     ])
     def test_set(self, dependency, resolver):
         """Container should set resolver for dependency"""
@@ -53,7 +53,7 @@ class ContainerTests:
     @mark.parametrize('dependency, resolver, last_resolver', [
         ('key', Mock(), FunctionResolver),
         (get_dependency_key, SingletonResolver, Mock()),
-        (Container, FunctionResolver, SingletonResolver)
+        ('ContainerTest', FunctionResolver, SingletonResolver)
     ])
     def test_last_resolver(self, dependency, resolver, last_resolver):
         """Container should overwrite resolver for same dependency"""
@@ -62,7 +62,7 @@ class ContainerTests:
 
         assert self.container.get_resolver(dependency) == last_resolver
 
-    @mark.parametrize('dependency', ['key', get_dependency_key, Container])
+    @mark.parametrize('dependency', ['key', get_dependency_key, 'ContainerTest'])
     def test_get_resolver_returns_none(self, dependency):
         """get_resolver() should return none for not existent dependency"""
         assert self.container.get_resolver(dependency) is None
@@ -70,7 +70,7 @@ class ContainerTests:
     @mark.parametrize('dependency, param', [
         ('key', None),
         (get_dependency_key, 'param'),
-        (Container, None)
+        ('ContainerTest', None)
     ])
     def test_resolve_uses_resolver(self, dependency, param):
         """resolve() should return resolver result"""
@@ -84,7 +84,7 @@ class ContainerTests:
         assert resolver.resolve.call_args == call(self.container, param)
         assert actual == result
 
-    @mark.parametrize('dependency', ['key', get_dependency_key, Container])
+    @mark.parametrize('dependency', ['key', get_dependency_key, 'ContainerTest'])
     def test_resolve_raises(self, dependency):
         """resolve() should raise exception for not existent dependency"""
         with raises(DependencyError):
@@ -93,7 +93,7 @@ class ContainerTests:
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
         (get_dependency_key, 1),
-        (Container, 'value')
+        ('ContainerTest', 'value')
     ])
     def test_copy(self, dependency, value):
         """copy() should return new Container with same dependencies"""
@@ -106,7 +106,7 @@ class ContainerTests:
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
         (get_dependency_key, 1),
-        (Container, 'value')
+        ('ContainerTest', 'value')
     ])
     def test_copy_uses_only_current_dependencies(self, dependency, value):
         """copy() should return new Container with same dependencies"""
@@ -126,6 +126,14 @@ class ContainerTests:
 
         assert self.container.resolve('value') == 0
         assert copy.resolve('value') == 1
+
+    @mark.parametrize('param', [None, 'some param', object])
+    def test_resolves_container(self, param):
+        """should resolve Container"""
+
+        actual = self.container.resolve(Container, param=param)
+
+        assert actual == self.container
 
 
 def test_get_set_container():

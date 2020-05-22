@@ -1,8 +1,8 @@
 """Core functionality"""
 
-from contextvars import ContextVar
 from abc import abstractmethod
 from contextlib import contextmanager
+from contextvars import ContextVar
 from copy import deepcopy
 from typing import Any, Callable, Union, Dict
 
@@ -24,11 +24,17 @@ class Resolver:
         """Factory method for resolving dependency"""
 
 
+class ContainerResolver(Resolver):
+    def resolve(self, container: 'Container', param: Any = None):
+        return container
+
+
 class Container:
     """Container for dependencies"""
 
     def __init__(self, resolvers: Dict[str, Resolver] = None):
         self._resolvers: Dict[str, Resolver] = {} if resolvers is None else resolvers
+        self.set(Container, ContainerResolver())
 
     def set(self, dependency: Union[str, Callable], resolver: Resolver):
         """Sets resolver for dependency"""
