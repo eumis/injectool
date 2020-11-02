@@ -20,12 +20,14 @@ class Resolver:
     """Interface for resolver"""
 
     @abstractmethod
-    def resolve(self, container: 'Container', param: Any = None):
+    def resolve(self, container: 'Container', param: Any = None) -> Any:
         """Factory method for resolving dependency"""
 
 
 class ContainerResolver(Resolver):
-    def resolve(self, container: 'Container', param: Any = None):
+    """Returns container instance"""
+
+    def resolve(self, container: 'Container', param: Any = None) -> 'Container':
         return container
 
 
