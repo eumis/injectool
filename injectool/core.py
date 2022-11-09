@@ -4,7 +4,7 @@ from abc import abstractmethod
 from contextlib import contextmanager
 from contextvars import ContextVar
 from copy import deepcopy
-from typing import Any, Callable, Union, Dict
+from typing import Any, Callable, Generator, Optional, Union, Dict
 
 
 class DependencyError(Exception):
@@ -20,21 +20,21 @@ class Resolver:
     """Interface for resolver"""
 
     @abstractmethod
-    def resolve(self, container: 'Container', param: Any = None) -> Any:
+    def resolve(self, container: 'Container', param: Optional[Any] = None) -> Any:
         """Factory method for resolving dependency"""
 
 
 class ContainerResolver(Resolver):
     """Returns container instance"""
 
-    def resolve(self, container: 'Container', param: Any = None) -> 'Container':
+    def resolve(self, container: 'Container', _: Optional[Any] = None) -> 'Container':
         return container
 
 
 class Container:
     """Container for dependencies"""
 
-    def __init__(self, resolvers: Dict[str, Resolver] = None):
+    def __init__(self, resolvers: Optional[Dict[str, Resolver]] = None):
         self._resolvers: Dict[str, Resolver] = {} if resolvers is None else resolvers
         self.set(Container, ContainerResolver())
 
@@ -52,7 +52,7 @@ class Container:
         except KeyError:
             raise DependencyError('Dependency "{0}" is not found'.format(key))
 
-    def get_resolver(self, dependency: Union[str, Callable]) -> Resolver:
+    def get_resolver(self, dependency: Union[str, Callable]) -> Optional[Resolver]:
         """returns resolver for dependency"""
         key = get_dependency_key(dependency)
         return self._resolvers.get(key, None)
@@ -78,7 +78,7 @@ def get_container() -> Container:
 
 
 @contextmanager
-def use_container(container: Container = None) -> Container:
+def use_container(container: Optional[Container] = None) -> Generator[Container, None, None]:
     """
     Uses passed container for registering and resolving dependencies
     Creates new if container doesn't exist.
