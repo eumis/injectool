@@ -1,12 +1,12 @@
 """Injection functionality"""
 
 from functools import wraps
-from typing import List, Union, Callable
+from typing import Union, Callable
 
 from injectool.core import get_dependency_key, resolve, DependencyError
 
 
-def inject(*dependencies: List[Union[str, Callable]], **name_to_dependency):
+def inject(*dependencies: Union[str, Callable], **name_to_dependency):
     """
     Resolves dependencies in default container
     and passes it as optional parameters to function
