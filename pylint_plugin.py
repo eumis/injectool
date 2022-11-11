@@ -1,6 +1,6 @@
 """Plugin to disable certain messages for test modules"""
 
-from collections import Callable  # pylint:disable=no-name-in-module
+from typing import Callable  # pylint:disable=no-name-in-module
 
 from pylint.lint import PyLinter
 

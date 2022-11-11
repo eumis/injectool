@@ -1,6 +1,6 @@
 """Dependency injection tool"""
 
-__version__ = '2.0.3'
+__version__ = '2.0.4'
 
 from .core import DependencyError, Resolver, Container
 from .core import get_dependency_key, set_container, get_container, resolve, use_container
