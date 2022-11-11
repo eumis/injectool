@@ -14,3 +14,6 @@ pyvenv.cfg
 .idea/
 Pipfile.lock
 venv/
+coverage.xml
+cobertura.xml
+.coverage

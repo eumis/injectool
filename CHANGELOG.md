@@ -1,6 +1,10 @@
 # Changelog
 
-## Dev
+## 2.0.4
+
+- fixed typings
+
+## 2.0.3
 
 - fixed passing injected parameters
 
