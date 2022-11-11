@@ -1,6 +1,8 @@
 name: Release
 
-on: [push]
+on:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -33,4 +35,4 @@ jobs:
       - name: Publish package
         if: ${{ success() }}
         run: |
-          python -m twine upload --repository testpypi dist/* -u __token__ -p ${{ secrets.PYPI_TEST_TOKEN }}
+          python -m twine upload --repository dist/* -u __token__ -p ${{ secrets.PYPI_TOKEN }}
