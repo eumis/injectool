@@ -35,4 +35,4 @@ jobs:
       - name: Publish package
         if: ${{ success() }}
         run: |
-          python -m twine upload --repository dist/* -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+          python -m twine upload dist/* -u __token__ -p ${{ secrets.PYPI_TOKEN }}
