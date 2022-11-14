@@ -20,3 +20,7 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/eumis/injectool"
+
+[tool.pylint.main]
+disable = ["too-few-public-methods", "missing-class-docstring", "missing-function-docstring", "missing-module-docstring"]
+max-line-length = 120

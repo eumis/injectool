@@ -15,6 +15,8 @@ def inject_fixture():
 
 @mark.usefixtures('inject_fixture')
 class InjectTests:
+    container: Container
+
     @staticmethod
     @mark.parametrize('dep, key', [
         ('key', get_dependency_key('key')),
