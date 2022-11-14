@@ -17,11 +17,11 @@ class SingletonResolver(Resolver):
         """Sets value for parameter"""
         self._values[param] = value
 
-    def resolve(self, container: Container, param: Any = None):
+    def resolve(self, _: Container, param: Any = None):
         try:
             return self._values[param]
-        except KeyError:
-            raise DependencyError(f'Singleton value for parameter {param} is not found')
+        except KeyError as key_error:
+            raise DependencyError(f'Singleton value for parameter {param} is not found') from key_error
 
 
 class FunctionResolver(Resolver):

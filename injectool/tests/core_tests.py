@@ -27,6 +27,8 @@ def container_fixture(request):
 
 @mark.usefixtures('container_fixture')
 class ContainerTests:
+    container: Container
+
     @staticmethod
     @mark.parametrize('dependency, resolver', [
         ('key', Mock()),

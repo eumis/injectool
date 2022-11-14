@@ -3,12 +3,14 @@ from unittest.mock import Mock, call
 from pytest import mark, raises
 
 from injectool.core import get_dependency_key, Container, use_container, DependencyError
-from injectool.resolvers import SingletonResolver, FunctionResolver, add_singleton, add_function_resolver, add_type, \
-    add_resolver
+from injectool.resolvers import SingletonResolver, FunctionResolver
+from injectool.resolvers import add_singleton, add_function_resolver, add_type ,add_resolver
 
 
 class SingletonResolverTests:
     """Singleton resolver class tests"""
+
+    container: Container
 
     @staticmethod
     @mark.parametrize('def_value, def_param, value, param', [
@@ -52,13 +54,13 @@ class FunctionResolverTests:
     def test_returns_dependency(value):
         """resolve() should call passed function with resolve parameters"""
         container = Mock()
-        resolver = FunctionResolver(lambda c, p=None: value)
+        resolver = FunctionResolver(lambda _, __=None: value)
 
         assert resolver.resolve(container) == value
 
 
 @mark.parametrize('dependency, resolver', [
-    ('key', FunctionResolver(lambda: 'value')),
+    ('key', FunctionResolver(lambda _, __: 'value')),
     (get_dependency_key, SingletonResolver(1)),
     (Container, Mock())
 ])
@@ -71,7 +73,7 @@ def test_add_resolver(dependency, resolver):
 
 
 @mark.parametrize('dependency, value', [
-    ('key', lambda c, param=None: 'value'),
+    ('key', lambda _, __=None: 'value'),
     (get_dependency_key, 1),
     (Container, Mock())
 ])
@@ -86,8 +88,8 @@ def test_add_singleton(dependency, value):
 
 
 @mark.parametrize('dependency, function', [
-    ('key', lambda c, p=None: 'value'),
-    (get_dependency_key, lambda c, p=None: 1)
+    ('key', lambda _, __=None: 'value'),
+    (get_dependency_key, lambda _, __=None: 1)
 ])
 def test_add_function_resolver(dependency, function):
     """should add FunctionResolver to current container"""
@@ -100,7 +102,7 @@ def test_add_function_resolver(dependency, function):
 
 
 class TestType:
-    pass
+    """type for type dependency tests"""
 
 
 @mark.parametrize('dependency, type_', [
@@ -112,6 +114,6 @@ def test_add_type(dependency, type_):
         add_type(dependency, TestType)
         resolver = container.get_resolver(dependency)
 
+        assert resolver is not None
         actual = resolver.resolve(container)
-
         assert isinstance(actual, type_)

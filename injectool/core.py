@@ -49,8 +49,8 @@ class Container:
         try:
             resolver = self._resolvers[key]
             return resolver.resolve(self, param)
-        except KeyError:
-            raise DependencyError('Dependency "{0}" is not found'.format(key))
+        except KeyError as key_error:
+            raise DependencyError(f'Dependency "{key}" is not found') from key_error
 
     def get_resolver(self, dependency: Union[str, Callable]) -> Optional[Resolver]:
         """returns resolver for dependency"""
