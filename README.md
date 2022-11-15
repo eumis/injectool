@@ -1,8 +1,8 @@
 # injectool
 
-[![Build Status](https://travis-ci.com/eumis/injectool.svg?branch=dev)](https://travis-ci.com/eumis/injectool)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/04a2ab0640b64f288fc89e80b6460c52)](https://www.codacy.com/gh/eumis/injectool/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=eumis/injectool&amp;utm_campaign=Badge_Grade)
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/04a2ab0640b64f288fc89e80b6460c52)](https://www.codacy.com/gh/eumis/injectool/dashboard?utm_source=github.com&utm_medium=referral&utm_content=eumis/injectool&utm_campaign=Badge_Coverage)
+[![example branch parameter](https://github.com/eumis/injectool/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/eumis/injectool/actions/workflows/ci.yml?query=branch%3Adev++)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/9945bfa38f9845e68c7dfcd8d02048cb)](https://www.codacy.com/gh/eumis/injectool/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=eumis/injectool&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/9945bfa38f9845e68c7dfcd8d02048cb)](https://www.codacy.com/gh/eumis/injectool/dashboard?utm_source=github.com&utm_medium=referral&utm_content=eumis/injectool&utm_campaign=Badge_Coverage)
 [![image](https://img.shields.io/pypi/v/injectool.svg)](https://python.org/pypi/injectool)
 [![image](https://img.shields.io/pypi/pyversions/injectool.svg)](https://python.org/pypi/injectool)
 [![image](https://img.shields.io/pypi/l/injectool.svg)](https://python.org/pypi/injectool)
