@@ -1,5 +1,9 @@
 # Changelog
 
+# Dev
+
+- Dependency is used as a key instead of its name
+
 ## 2.0.4
 
 - fixed typings

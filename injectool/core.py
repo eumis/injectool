@@ -11,9 +11,9 @@ class DependencyError(Exception):
     """Base injectool error"""
 
 
-def get_dependency_key(dependency: Union[str, Callable]) -> str:
+def get_dependency_key(dependency: Any) -> Any:
     """returns string key for passed dependency"""
-    return dependency if isinstance(dependency, str) else dependency.__name__
+    return dependency
 
 
 class Resolver:
@@ -35,7 +35,7 @@ class Container:
     """Container for dependencies"""
 
     def __init__(self, resolvers: Optional[Dict[str, Resolver]] = None):
-        self._resolvers: Dict[str, Resolver] = {} if resolvers is None else resolvers
+        self._resolvers: Dict[Any, Resolver] = {} if resolvers is None else resolvers
         self.set(Container, ContainerResolver())
 
     def set(self, dependency: Union[str, Callable], resolver: Resolver):

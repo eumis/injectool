@@ -10,8 +10,8 @@ from injectool.resolvers import SingletonResolver, FunctionResolver, add_resolve
 
 @mark.parametrize('dependency, key', [
     ('key', 'key'),
-    (get_dependency_key, 'get_dependency_key'),
-    ('ContainerTest', 'ContainerTest')
+    (get_dependency_key, get_dependency_key),
+    (Container, Container)
 ])
 def test_get_dependency_key(dependency, key):
     """get_dependency_key() should return __name__ for class or function"""

@@ -19,9 +19,9 @@ class InjectTests:
 
     @staticmethod
     @mark.parametrize('dep, key', [
-        ('key', get_dependency_key('key')),
-        (get_dependency_key, get_dependency_key(get_dependency_key)),
-        (Container, get_dependency_key('Container'))
+        ('key', 'key'),
+        (get_dependency_key, get_dependency_key.__name__),
+        (Container, 'Container')
     ])
     def test_inject_dependency(dep, key):
         """should inject dependencies as optional parameters"""
@@ -37,9 +37,9 @@ class InjectTests:
 
     @staticmethod
     @mark.parametrize('dep, key, parameter', [
-        ('key', get_dependency_key('key'), None),
-        (get_dependency_key, get_dependency_key(get_dependency_key), 'param'),
-        (Container, get_dependency_key(Container), object())
+        ('key', 'key', None),
+        (get_dependency_key, get_dependency_key.__name__, 'param'),
+        (Container, Container.__name__, object())
     ])
     def test_uses_passed_value(dep, key, parameter):
         """should use passed value instead of inject it"""
@@ -89,8 +89,8 @@ class InjectTests:
 
 
 @mark.usefixtures('inject_fixture')
-@mark.parametrize('default', [True, False])
-def test_dependency(default):
+@mark.parametrize('use_implementation', [False, True])
+def test_dependency(use_implementation):
     """should resolve function or use decorated in case not registered"""
     implementation = Mock()
     default_implementation = Mock()
@@ -99,10 +99,10 @@ def test_dependency(default):
     def func():
         default_implementation()
 
-    if not default:
+    if use_implementation:
         add_singleton(func, implementation)
 
     func()
 
-    assert default_implementation.called == default
-    assert implementation.called == (not default)
+    assert default_implementation.called == (not use_implementation)
+    assert implementation.called == use_implementation

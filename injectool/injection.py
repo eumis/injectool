@@ -15,7 +15,7 @@ def inject(*dependencies: Union[str, Callable], **name_to_dependency):
     def _decorate(func):
         keys = [get_dependency_key(dep) for dep in dependencies]
         name_to_key = {
-            **{key: key for key in keys},
+            **{key if isinstance(key, str) else key.__name__: key for key in keys},
             **{name: get_dependency_key(dep) for name, dep in name_to_dependency.items()}
         }
 
@@ -37,7 +37,7 @@ def dependency(func):
     @wraps(func)
     def _decorated(*args, **kwargs):
         try:
-            implementation = resolve(func)
+            implementation = resolve(_decorated)
         except DependencyError:
             implementation = func
         return implementation(*args, **kwargs)
