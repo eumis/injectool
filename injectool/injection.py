@@ -1,7 +1,7 @@
 """Injection functionality"""
 
 from functools import wraps
-from typing import Union, Callable
+from typing import Any, Union, Callable
 
 from injectool.core import get_dependency_key, resolve, DependencyError
 
@@ -43,3 +43,27 @@ def dependency(func):
         return implementation(*args, **kwargs)
 
     return _decorated
+
+
+class InjectedDefaultValue:
+    """Can used as default value for injected parameters"""
+    def __init__(self):
+        pass
+
+    def __getitem__(self, *_):
+        raise DependencyError()
+
+    def __setitem__(self, *_):
+        raise DependencyError()
+
+    def __getattr__(self, *_):
+        raise DependencyError()
+
+    def __setattr__(self, *_):
+        raise DependencyError()
+
+    def __call__(self, *_, **__):
+        raise DependencyError()
+
+
+In: Any = InjectedDefaultValue()

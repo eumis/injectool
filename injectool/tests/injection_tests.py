@@ -1,9 +1,10 @@
 from unittest.mock import Mock
+from _pytest.python_api import raises
 
 from pytest import mark, fixture
 
-from injectool.core import use_container, Container, get_dependency_key
-from injectool.injection import inject, dependency
+from injectool.core import DependencyError, use_container, Container, get_dependency_key
+from injectool.injection import In, inject, dependency
 from injectool.resolvers import add_singleton
 
 
@@ -106,3 +107,30 @@ def test_dependency(use_implementation):
 
     assert default_implementation.called == (not use_implementation)
     assert implementation.called == use_implementation
+
+class InjectedDefaultValueTests:
+    """InjectedDefaultValue test"""
+    def test_get_attr_raises(self):
+        """should raise DependencyError while getting attribute"""
+        with raises(DependencyError):
+            _ = In.value
+
+    def test_set_attr_raises(self):
+        """should raise DependencyError while setting attribute"""
+        with raises(DependencyError):
+            In.value = 'value'
+
+    def test_get_item_raises(self):
+        """should raise DependencyError while getting item"""
+        with raises(DependencyError):
+            In.value[0]
+
+    def test_set_item_raises(self):
+        """should raise DependencyError while setting item"""
+        with raises(DependencyError):
+            In.value[0] = 'value'
+
+    def test_call_raises(self):
+        """should raise DependencyError while calling it"""
+        with raises(DependencyError):
+            In()
