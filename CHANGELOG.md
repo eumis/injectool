@@ -5,6 +5,7 @@
 - Dependency is used as a key instead of its name
 - Added default injection value
 - Resolvers are removed
+- Added scopes
 
 ## 2.0.4
 
