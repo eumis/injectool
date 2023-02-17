@@ -7,6 +7,7 @@
 - Resolvers are removed
 - Added scopes
 - Added default container
+- Added per thread
 
 ## 2.0.4
 

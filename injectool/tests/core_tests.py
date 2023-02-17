@@ -1,4 +1,3 @@
-import time
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import Mock
@@ -184,7 +183,7 @@ class CurrentContainerTests:
         default = Container()
         set_default_container(default)
 
-        with ThreadPoolExecutor(threads_count) as executor:
+        with ThreadPoolExecutor(max_workers=threads_count) as executor:
             futures = [executor.submit(get_container) for _ in range(threads_count)]
             containers = [future.result() for future in futures]
             for actual in containers:
