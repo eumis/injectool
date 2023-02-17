@@ -45,18 +45,19 @@ class Container:
         return Container(self._resolvers.copy())
 
 
-_CURRENT_CONTAINER = ContextVar('container')
-_CURRENT_CONTAINER.set(Container())
+_DEFAULT_CONTAINER = Container()
+_CURRENT_CONTAINER = ContextVar('dependency_container')
 
 
-def set_container(container: Container):
+def set_default_container(container: Container):
     """Sets container used for resolving and registering dependencies"""
-    _CURRENT_CONTAINER.set(container)
+    global _DEFAULT_CONTAINER
+    _DEFAULT_CONTAINER = container
 
 
 def get_container() -> Container:
     """Returns container used for resolving and registering dependencies"""
-    return _CURRENT_CONTAINER.get()
+    return _CURRENT_CONTAINER.get(_DEFAULT_CONTAINER)
 
 
 @contextmanager

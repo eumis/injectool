@@ -1,3 +1,5 @@
 -e .
 pytest
 pylint
+asyncio
+pytest-asyncio

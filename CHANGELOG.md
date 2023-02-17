@@ -6,6 +6,7 @@
 - Added default injection value
 - Resolvers are removed
 - Added scopes
+- Added default container
 
 ## 2.0.4
 

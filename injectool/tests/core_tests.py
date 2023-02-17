@@ -1,9 +1,12 @@
+import time
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import Mock
 
 from pytest import raises, mark, fixture
 
 from injectool.core import Container, DependencyError, get_dependency_name
-from injectool.core import get_dependency_key, use_container, get_container, set_container
+from injectool.core import get_dependency_key, use_container, get_container, set_default_container
 from injectool.core import resolve
 
 
@@ -37,8 +40,9 @@ def container_fixture(request):
         yield container
 
 
-@mark.usefixtures('container_fixture')
+@mark.usefixtures(container_fixture.__name__)
 class ContainerTests:
+    """Container class tests"""
 
     container: Container
 
@@ -119,29 +123,35 @@ class ContainerTests:
         assert copy.resolve('value') == 1
 
 
-def test_get_set_container():
-    """get should return current container"""
-    container = Container()
-
-    set_container(container)
-    actual = get_container()
-
-    assert container == actual
-
-
-@mark.usefixtures('container_fixture')
-class UseContainerTests:
-    """DefaultContainerContext class tests"""
+class CurrentContainerTests:
+    """Current container tests"""
 
     @staticmethod
-    def test_creates_container():
+    def test_default_container():
+        """default container should be created"""
+        actual = get_container()
+
+        assert actual is not None
+        assert isinstance(actual, Container)
+
+    @staticmethod
+    def test_set_default_container():
+        """should return current container"""
+        container = Container()
+
+        set_default_container(container)
+
+        assert get_container() is container
+
+    @staticmethod
+    def test_use_container():
         """should create new container and use it"""
         container = get_container()
         with use_container() as actual:
             assert actual is not None
             assert actual != container
-            assert get_container() == actual
-        assert get_container() == container
+            assert get_container() is actual
+        assert get_container() is container
 
     @staticmethod
     def test_uses_passed_container():
@@ -149,9 +159,36 @@ class UseContainerTests:
         container = get_container()
         new_container = Container()
         with use_container(new_container) as actual:
-            assert actual == new_container
-            assert get_container() == actual
-        assert get_container() == container
+            assert actual is new_container
+            assert get_container() is new_container
+        assert get_container() is container
+
+    @mark.asyncio
+    @mark.parametrize('coroutines_count', [1, 5, 10])
+    async def test_use_container_async(self, coroutines_count):
+        """should use same container in async functions"""
+        with use_container() as container:
+            coroutines = [self._get_container_async() for _ in range(coroutines_count)]
+            containers = await asyncio.gather(*coroutines)
+            for actual in containers:
+                assert actual is container
+
+    @staticmethod
+    async def _get_container_async() -> Container:
+        await asyncio.sleep(0.1)
+        return get_container()
+
+    @mark.parametrize('threads_count', [1, 2, 5])
+    def test_new_thread_container(self, threads_count):
+        """default container should be used for new thread"""
+        default = Container()
+        set_default_container(default)
+
+        with ThreadPoolExecutor(threads_count) as executor:
+            futures = [executor.submit(get_container) for _ in range(threads_count)]
+            containers = [future.result() for future in futures]
+            for actual in containers:
+                assert actual is default
 
 
 class ResolveTests:
