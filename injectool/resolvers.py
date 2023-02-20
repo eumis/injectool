@@ -1,5 +1,6 @@
 """Dependency resolvers used by container"""
 
+from asyncio import threads
 from contextvars import ContextVar, Token
 import threading
 from typing import Any, Callable, Dict, List, Optional, Type
@@ -88,8 +89,7 @@ class ThreadResolver:
     def resolve(self) -> Any:
         """returns type instance for current thread"""
         thread = threading.current_thread()
-        thread_id = threading.get_ident()
-        print(f'id {threading.get_ident()} hash {hash(thread)} native {threading.get_native_id()}')
+        thread_id = hash(thread)
 
         if thread_id not in self._instances:
             instance = self._type()

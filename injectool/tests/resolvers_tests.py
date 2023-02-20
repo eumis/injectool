@@ -99,12 +99,12 @@ class ScopesTests:
         add_scoped(dependency, type_, dispose)
 
         with DependencyScope():
-            outer = resolve(dependency)
+            one = resolve(dependency)
             with DependencyScope():
-                actual = resolve(dependency)
+                two = resolve(dependency)
 
-        assert dispose.call_args_list[0] == call(actual)
-        assert dispose.call_args_list[1] == call(outer)
+        assert dispose.call_args_list[0] == call(two)
+        assert dispose.call_args_list[1] == call(one)
 
 
 @mark.usefixtures(container_fixture.__name__)
@@ -145,3 +145,18 @@ class ThreadTests:
 
         assert one != two
 
+    @mark.parametrize('dependency, type_', [
+        (Mock, Mock),
+        (Container, Container),
+        (SomeClass, SomeClass)
+    ])
+    def test_add_per_thread_dispose(self, dependency, type_):
+        """should return instance per thread"""
+        add_per_thread(dependency, type_)
+        one = resolve(dependency)
+
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self.container.resolve, dependency)
+            two = future.result()
+
+        assert one != two
