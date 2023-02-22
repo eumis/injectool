@@ -144,19 +144,3 @@ class ThreadTests:
             two = future.result()
 
         assert one != two
-
-    @mark.parametrize('dependency, type_', [
-        (Mock, Mock),
-        (Container, Container),
-        (SomeClass, SomeClass)
-    ])
-    def test_add_per_thread_dispose(self, dependency, type_):
-        """should return instance per thread"""
-        add_per_thread(dependency, type_)
-        one = resolve(dependency)
-
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.container.resolve, dependency)
-            two = future.result()
-
-        assert one != two
