@@ -1,6 +1,5 @@
 """Dependency resolvers used by container"""
 
-from asyncio import threads
 from contextvars import ContextVar, Token
 import threading
 from typing import Any, Callable, Dict, List, Optional, Type
