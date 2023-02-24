@@ -1,5 +1,4 @@
 name: CI
-uses: dineshsonachalam/markdown-autodocs@v1.0.7
 
 on: [push, pull_request]
 
