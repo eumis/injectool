@@ -3,7 +3,7 @@ from _pytest.python_api import raises
 
 from pytest import mark, fixture
 
-from injectool.core import DependencyError, use_container, Container, get_dependency_key
+from injectool.core import DependencyError, use_container, Container
 from injectool.injection import In, inject, dependency
 from injectool.resolvers import add_singleton
 
@@ -21,7 +21,7 @@ class InjectTests:
     @staticmethod
     @mark.parametrize('dep, key', [
         ('key', 'key'),
-        (get_dependency_key, get_dependency_key.__name__),
+        (use_container, use_container.__name__),
         (Container, 'Container')
     ])
     def test_inject_dependency(dep, key):
@@ -39,7 +39,7 @@ class InjectTests:
     @staticmethod
     @mark.parametrize('dep, key, parameter', [
         ('key', 'key', None),
-        (get_dependency_key, get_dependency_key.__name__, 'param'),
+        (use_container, use_container.__name__, 'param'),
         (Container, Container.__name__, object())
     ])
     def test_uses_passed_value(dep, key, parameter):
@@ -56,7 +56,7 @@ class InjectTests:
     @staticmethod
     @mark.parametrize('dep, name', [
         ('key', 'key'),
-        (get_dependency_key, 'dep_key'),
+        (use_container, 'dep_key'),
         (Container, 'con')
     ])
     def test_inject_dependency_with_name(dep, name):
@@ -74,7 +74,7 @@ class InjectTests:
     @staticmethod
     @mark.parametrize('dep, name, parameter', [
         ('key', 'key', None),
-        (get_dependency_key, 'dep_key', 'value'),
+        (use_container, 'dep_key', 'value'),
         (Container, 'con', object())
     ])
     def test_uses_passed_value_by_name(dep, name, parameter):

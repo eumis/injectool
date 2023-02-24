@@ -9,35 +9,27 @@ class DependencyError(Exception):
     """Base injectool error"""
 
 
-def get_dependency_key(dependency: Any) -> Any:
-    """returns string key for passed dependency"""
-    return dependency
-
-
-def get_dependency_name(dependency: Any) -> str:
-    """returns string key for passed dependency"""
-    return dependency.__name__ if hasattr(dependency, '__name__') else str(dependency)
-
-
-Resolve = Callable[[], Any]
+Dependency = Any
+Resolver = Callable[[], Any]
 
 
 class Container:
     """Container for dependencies"""
 
-    def __init__(self, resolvers: Optional[Dict[str, Resolve]] = None):
-        self._resolvers: Dict[Any, Resolve] = {} if resolvers is None else resolvers
+    def __init__(self, resolvers: Optional[Dict[Dependency, Resolver]] = None):
+        self._resolvers: Dict[Dependency, Resolver] = {} if resolvers is None else resolvers
         self.set(Container, lambda: self)
 
-    def set(self, dependency: Any, resolve: Resolve):
+    def set(self, dependency: Dependency, resolve: Resolver):
         """Sets resolver for dependency"""
         self._resolvers[dependency] = resolve
 
-    def resolve(self, dependency: Any) -> Any:
+    def resolve(self, dependency: Dependency) -> Any:
         """Resolve dependency"""
         resolve = self._resolvers.get(dependency)
         if resolve is None:
-            raise DependencyError(f'Dependency "{get_dependency_name(dependency)}" is not found')
+            dependency_name = dependency.__name__ if hasattr(dependency, '__name__') else str(dependency)
+            raise DependencyError(f'Dependency "{dependency_name}" is not found')
         return resolve()
 
     def copy(self) -> 'Container':
@@ -46,17 +38,17 @@ class Container:
 
 
 _DEFAULT_CONTAINER = Container()
-_CURRENT_CONTAINER = ContextVar('dependency_container')
-
 
 def set_default_container(container: Container):
-    """Sets container used for resolving and registering dependencies"""
+    """Sets default container"""
     global _DEFAULT_CONTAINER
     _DEFAULT_CONTAINER = container
 
 
+_CURRENT_CONTAINER = ContextVar('dependency_container')
+
 def get_container() -> Container:
-    """Returns container used for resolving and registering dependencies"""
+    """Returns current container"""
     return _CURRENT_CONTAINER.get(_DEFAULT_CONTAINER)
 
 
@@ -74,6 +66,6 @@ def use_container(container: Optional[Container] = None) -> Generator[Container,
         _CURRENT_CONTAINER.reset(reset_token)
 
 
-def resolve(dependency: Any):
-    """resolves dependency"""
+def resolve(dependency: Dependency):
+    """resolves dependency for current container"""
     return get_container().resolve(dependency)

@@ -4,15 +4,19 @@ from contextvars import ContextVar, Token
 import threading
 from typing import Any, Callable, Dict, List, Optional, Type
 
-from injectool.core import get_container
+from injectool.core import get_container, Dependency, Resolver
 
 
-def add_singleton(dependency: Any, value: Any):
+def add(dependency: Dependency, resolve: Resolver):
+    get_container().set(dependency, resolve)
+
+
+def add_singleton(dependency: Dependency, value: Any):
     """Adds single value"""
     get_container().set(dependency, lambda: value)
 
 
-def add_type(dependency: Any, type_: Type):
+def add_type(dependency: Dependency, type_: Type):
     """Adds type instance per reslove call"""
     get_container().set(dependency, lambda: type_())
 
@@ -45,6 +49,11 @@ class DependencyScope:
         self._exit_callbacks.append(callback)
 
 
+def scope() -> DependencyScope:
+    """returns new instance of scope"""
+    return DependencyScope()
+
+
 _CURRENT_SCOPE.set(DependencyScope())
 
 
@@ -74,7 +83,7 @@ class ScopeResolver:
                 self._dispose(instance)
 
 
-def add_scoped(dependency: Any, type_: Type, dispose: Optional[Callable[[Any], None]] = None):
+def add_scoped(dependency: Dependency, type_: Type, dispose: Optional[Callable[[Any], None]] = None):
     """Adds type instance per scope to current container"""
     get_container().set(dependency, ScopeResolver(type_, dispose).resolve)
 
@@ -99,5 +108,5 @@ class ThreadResolver:
         return instance
 
 
-def add_per_thread(dependency: Any, type_: Type):
+def add_per_thread(dependency: Dependency, type_: Type):
     get_container().set(dependency, ThreadResolver(type_).resolve)

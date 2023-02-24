@@ -4,30 +4,9 @@ from unittest.mock import Mock
 
 from pytest import raises, mark, fixture
 
-from injectool.core import Container, DependencyError, get_dependency_name
-from injectool.core import get_dependency_key, use_container, get_container, set_default_container
+from injectool.core import Container, DependencyError
+from injectool.core import use_container, get_container, set_default_container
 from injectool.core import resolve
-
-
-@mark.parametrize('dependency, key', [
-    ('key', 'key'),
-    (get_dependency_key, get_dependency_key),
-    (Container, Container)
-])
-def test_get_dependency_key(dependency, key):
-    """should return __name__ for class or function"""
-    assert get_dependency_key(dependency) == key
-
-
-@mark.parametrize('dependency, name', [
-    ('key', 'key'),
-    (1, '1'),
-    (get_dependency_key, 'get_dependency_key'),
-    (Container, 'Container'),
-])
-def test_get_dependency_name(dependency, name):
-    """should return __name__ else cast to string"""
-    assert get_dependency_name(dependency) == name
 
 
 @fixture
@@ -47,7 +26,7 @@ class ContainerTests:
 
     @mark.parametrize('dependency, resolve, check', [
         ('key', lambda: Mock(), lambda v: isinstance(v, Mock)),
-        (get_dependency_key, lambda: get_dependency_key, lambda v: v == get_dependency_key),
+        (get_container, lambda: get_container, lambda v: v == get_container),
         (Container, Container, lambda v: isinstance(v, Container))
     ])
     def test_resolve(self, dependency, resolve, check):
@@ -60,7 +39,7 @@ class ContainerTests:
 
     @mark.parametrize('dependency, resolve, check', [
         ('key', lambda: Mock(), lambda v: isinstance(v, Mock)),
-        (get_dependency_key, lambda: get_dependency_key, lambda v: v == get_dependency_key),
+        (get_container, lambda: get_container, lambda v: v == get_container),
         (Container, Container, lambda v: isinstance(v, Container))
     ])
     def test_last_resolver(self, dependency, resolve, check):
@@ -78,7 +57,7 @@ class ContainerTests:
 
         assert actual == self.container
 
-    @mark.parametrize('dependency', ['key', get_dependency_key, Mock])
+    @mark.parametrize('dependency', ['key', get_container, Mock])
     def test_resolve_raises(self, dependency):
         """resolve() should raise exception for not existent dependency"""
         with raises(DependencyError):
@@ -86,7 +65,7 @@ class ContainerTests:
 
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
-        (get_dependency_key, 1),
+        (get_container, 1),
         ('ContainerTest', 'value')
     ])
     def test_copy(self, dependency, value):
@@ -99,7 +78,7 @@ class ContainerTests:
 
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
-        (get_dependency_key, 1),
+        (get_container, 1),
         ('ContainerTest', 'value')
     ])
     def test_copy_uses_only_current_dependencies(self, dependency, value):
@@ -195,7 +174,7 @@ class ResolveTests:
     @staticmethod
     @mark.parametrize('dependency, resolve_, check', [
         ('key', lambda: Mock(), lambda v: isinstance(v, Mock)),
-        (get_dependency_key, lambda: get_dependency_key, lambda v: v == get_dependency_key),
+        (get_container, lambda: get_container, lambda v: v == get_container),
         (Container, Container, lambda v: isinstance(v, Container))
     ])
     def test_resolve(dependency, resolve_, check):

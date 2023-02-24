@@ -1,22 +1,21 @@
 """Injection functionality"""
 
 from functools import wraps
-from typing import Any, Union, Callable
+from typing import Any
 
-from injectool.core import get_dependency_key, resolve, DependencyError
+from injectool.core import Dependency, resolve, DependencyError
 
 
-def inject(*dependencies: Union[str, Callable], **name_to_dependency):
+def inject(*dependencies: Dependency, **name_to_dependency):
     """
     Resolves dependencies in default container
     and passes it as optional parameters to function
     """
 
     def _decorate(func):
-        keys = [get_dependency_key(dep) for dep in dependencies]
         name_to_key = {
-            **{key if isinstance(key, str) else key.__name__: key for key in keys},
-            **{name: get_dependency_key(dep) for name, dep in name_to_dependency.items()}
+            **{dep.__name__ if hasattr(dep, '__name__') else str(dep): dep for dep in dependencies},
+            **{name: dep for name, dep in name_to_dependency.items()}
         }
 
         @wraps(func)

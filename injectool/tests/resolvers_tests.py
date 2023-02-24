@@ -3,8 +3,8 @@ from unittest.mock import Mock, call
 
 from pytest import mark, fixture
 
-from injectool.core import get_dependency_key, Container, resolve, use_container
-from injectool.resolvers import DependencyScope, add_per_thread, add_scoped, add_singleton, add_type
+from injectool.core import Container, resolve, use_container
+from injectool.resolvers import DependencyScope, add, add_per_thread, add_scoped, add_singleton, add_type, scope
 
 
 class SomeClass:
@@ -22,7 +22,21 @@ def container_fixture(request):
 
 @mark.parametrize('dependency, value', [
     ('key', lambda _: 'value'),
-    (get_dependency_key, 1),
+    (use_container, 1),
+    (Container, Mock()),
+    (SomeClass, SomeClass())
+])
+def test_add(dependency, value):
+    """add() should add custom dependency resolver to current container"""
+    with use_container():
+        add(dependency, lambda: value)
+
+        assert resolve(dependency) is value
+
+
+@mark.parametrize('dependency, value', [
+    ('key', lambda _: 'value'),
+    (use_container, 1),
     (Container, Mock()),
     (SomeClass, SomeClass())
 ])
@@ -56,6 +70,15 @@ class ScopesTests:
     """Scopes tests"""
 
     container: Container
+
+
+    @staticmethod
+    def test_scope():
+        """returns new scope instance"""
+        actual = scope()
+
+        assert isinstance(actual, DependencyScope)
+        assert actual != scope()
 
     @mark.parametrize('dependency, type_', [
         (Mock, Mock),
