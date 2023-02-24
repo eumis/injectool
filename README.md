@@ -174,18 +174,21 @@ Any object can be used as **Dependency**.
 
 **Resolver** is function that returns value for a **Dependency**.
 
+https://github.com/eumis/injectool/blob/dev/injectool/core.py#L12-37
 <!-- MARKDOWN-AUTO-DOCS:START (CODE:src=./injectool/core.py&lines=12-37) -->
 <!-- MARKDOWN-AUTO-DOCS:END -->
 
 **Default** container is stored as global variable and used by default.
 **Default** container can be changed.
 
+https://github.com/eumis/injectool/blob/dev/injectool/core.py#L40-45
 <!-- MARKDOWN-AUTO-DOCS:START (CODE:src=./injectool/core.py&lines=40-45) -->
 <!-- MARKDOWN-AUTO-DOCS:END -->
 
 **Current** container can be set and used temporary.
 It's stored in ContextVar so it can be used in asynchronous code.
 
+https://github.com/eumis/injectool/blob/dev/injectool/core.py#L48-66
 <!-- MARKDOWN-AUTO-DOCS:START (CODE:src=./injectool/core.py&lines=48-66) -->
 <!-- MARKDOWN-AUTO-DOCS:END -->
 
