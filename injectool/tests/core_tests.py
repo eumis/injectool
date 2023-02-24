@@ -25,7 +25,7 @@ class ContainerTests:
     container: Container
 
     @mark.parametrize('dependency, resolve, check', [
-        ('key', lambda: Mock(), lambda v: isinstance(v, Mock)),
+        ('key', Mock, lambda v: isinstance(v, Mock)),
         (get_container, lambda: get_container, lambda v: v == get_container),
         (Container, Container, lambda v: isinstance(v, Container))
     ])

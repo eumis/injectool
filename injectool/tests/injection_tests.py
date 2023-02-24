@@ -123,7 +123,7 @@ class InjectedDefaultValueTests:
     def test_get_item_raises(self):
         """should raise DependencyError while getting item"""
         with raises(DependencyError):
-            In.value[0]
+            _ = In.value[0]
 
     def test_set_item_raises(self):
         """should raise DependencyError while setting item"""

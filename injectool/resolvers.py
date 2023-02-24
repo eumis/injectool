@@ -18,7 +18,7 @@ def add_singleton(dependency: Dependency, value: Any):
 
 def add_type(dependency: Dependency, type_: Type):
     """Adds type instance per reslove call"""
-    get_container().set(dependency, lambda: type_())
+    get_container().set(dependency, type_)
 
 
 _CURRENT_SCOPE = ContextVar('scope')
