@@ -31,6 +31,5 @@ jobs:
         run: |
           export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
           bash <(curl -Ls https://coverage.codacy.com/get.sh)
-
       - name: Markdown autodocs
-      - uses: dineshsonachalam/markdown-autodocs@v1.0.7
+        uses: dineshsonachalam/markdown-autodocs@v1.0.7
