@@ -1,22 +1,21 @@
 """Injection functionality"""
 
 from functools import wraps
-from typing import Union, Callable
+from typing import Any
 
-from injectool.core import get_dependency_key, resolve, DependencyError
+from injectool.core import Dependency, resolve, DependencyError
 
 
-def inject(*dependencies: Union[str, Callable], **name_to_dependency):
+def inject(*dependencies: Dependency, **name_to_dependency):
     """
     Resolves dependencies in default container
     and passes it as optional parameters to function
     """
 
     def _decorate(func):
-        keys = [get_dependency_key(dep) for dep in dependencies]
         name_to_key = {
-            **{key: key for key in keys},
-            **{name: get_dependency_key(dep) for name, dep in name_to_dependency.items()}
+            **{dep.__name__ if hasattr(dep, '__name__') else str(dep): dep for dep in dependencies},
+            **{name: dep for name, dep in name_to_dependency.items()}
         }
 
         @wraps(func)
@@ -37,9 +36,33 @@ def dependency(func):
     @wraps(func)
     def _decorated(*args, **kwargs):
         try:
-            implementation = resolve(func)
+            implementation = resolve(_decorated)
         except DependencyError:
             implementation = func
         return implementation(*args, **kwargs)
 
     return _decorated
+
+
+class InjectedDefaultValue:
+    """Can used as default value for injected parameters"""
+    def __init__(self):
+        pass
+
+    def __getitem__(self, *_):
+        raise DependencyError()
+
+    def __setitem__(self, *_):
+        raise DependencyError()
+
+    def __getattr__(self, *_):
+        raise DependencyError()
+
+    def __setattr__(self, *_):
+        raise DependencyError()
+
+    def __call__(self, *_, **__):
+        raise DependencyError()
+
+
+In: Any = InjectedDefaultValue()

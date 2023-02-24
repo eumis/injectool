@@ -1,92 +1,63 @@
-from unittest.mock import Mock, call
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import Mock
 
 from pytest import raises, mark, fixture
 
 from injectool.core import Container, DependencyError
-from injectool.core import get_dependency_key, use_container, get_container, set_container
+from injectool.core import use_container, get_container, set_default_container
 from injectool.core import resolve
-from injectool.resolvers import SingletonResolver, FunctionResolver, add_resolver
-
-
-@mark.parametrize('dependency, key', [
-    ('key', 'key'),
-    (get_dependency_key, 'get_dependency_key'),
-    ('ContainerTest', 'ContainerTest')
-])
-def test_get_dependency_key(dependency, key):
-    """get_dependency_key() should return __name__ for class or function"""
-    assert get_dependency_key(dependency) == key
 
 
 @fixture
 def container_fixture(request):
     with use_container() as container:
+
         request.cls.container = container
+
         yield container
 
 
-@mark.usefixtures('container_fixture')
+@mark.usefixtures(container_fixture.__name__)
 class ContainerTests:
+    """Container class tests"""
+
     container: Container
 
-    @staticmethod
-    @mark.parametrize('dependency, resolver', [
-        ('key', Mock()),
-        (get_dependency_key, SingletonResolver),
-        ('ContainerTests', FunctionResolver)
+    @mark.parametrize('dependency, resolve, check', [
+        ('key', lambda: Mock(), lambda v: isinstance(v, Mock)),
+        (get_container, lambda: get_container, lambda v: v == get_container),
+        (Container, Container, lambda v: isinstance(v, Container))
     ])
-    def test_init_resolvers(dependency, resolver):
-        """Uses resolvers passed to __init__"""
-        container = Container({get_dependency_key(dependency): resolver})
+    def test_resolve(self, dependency, resolve, check):
+        """Container should resolve set dependency"""
+        self.container.set(dependency, resolve)
 
-        assert container.get_resolver(dependency) == resolver
+        actual = self.container.resolve(dependency)
 
-    @mark.parametrize('dependency, resolver', [
-        ('key', Mock()),
-        (get_dependency_key, SingletonResolver),
-        ('ContainerTest', FunctionResolver)
+        assert check(actual)
+
+    @mark.parametrize('dependency, resolve, check', [
+        ('key', lambda: Mock(), lambda v: isinstance(v, Mock)),
+        (get_container, lambda: get_container, lambda v: v == get_container),
+        (Container, Container, lambda v: isinstance(v, Container))
     ])
-    def test_set(self, dependency, resolver):
-        """Container should set resolver for dependency"""
-        self.container.set(dependency, resolver)
-
-        assert self.container.get_resolver(dependency) == resolver
-
-    @mark.parametrize('dependency, resolver, last_resolver', [
-        ('key', Mock(), FunctionResolver),
-        (get_dependency_key, SingletonResolver, Mock()),
-        ('ContainerTest', FunctionResolver, SingletonResolver)
-    ])
-    def test_last_resolver(self, dependency, resolver, last_resolver):
+    def test_last_resolver(self, dependency, resolve, check):
         """Container should overwrite resolver for same dependency"""
-        self.container.set(dependency, resolver)
-        self.container.set(dependency, last_resolver)
+        self.container.set(dependency, lambda: None)
+        self.container.set(dependency, resolve)
 
-        assert self.container.get_resolver(dependency) == last_resolver
+        actual = self.container.resolve(dependency)
 
-    @mark.parametrize('dependency', ['key', get_dependency_key, 'ContainerTest'])
-    def test_get_resolver_returns_none(self, dependency):
-        """get_resolver() should return none for not existent dependency"""
-        assert self.container.get_resolver(dependency) is None
+        assert check(actual)
 
-    @mark.parametrize('dependency, param', [
-        ('key', None),
-        (get_dependency_key, 'param'),
-        ('ContainerTest', None)
-    ])
-    def test_resolve_uses_resolver(self, dependency, param):
-        """resolve() should return resolver result"""
-        result = Mock()
-        resolver = Mock(resolve=Mock())
-        resolver.resolve.side_effect = lambda c, p: result
-        self.container.set(dependency, resolver)
+    def test_resolve_self(self):
+        """should resolve self instance of Container"""
+        actual = self.container.resolve(Container)
 
-        actual = self.container.resolve(dependency, param)
+        assert actual == self.container
 
-        assert resolver.resolve.call_args == call(self.container, param)
-        assert actual == result
-
-    @mark.parametrize('dependency', ['key', get_dependency_key, 'ContainerTest'])
+    @mark.parametrize('dependency', ['key', get_container, Mock])
     def test_resolve_raises(self, dependency):
         """resolve() should raise exception for not existent dependency"""
         with raises(DependencyError):
@@ -94,73 +65,71 @@ class ContainerTests:
 
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
-        (get_dependency_key, 1),
+        (get_container, 1),
         ('ContainerTest', 'value')
     ])
     def test_copy(self, dependency, value):
         """copy() should return new Container with same dependencies"""
-        self.container.set(dependency, SingletonResolver(value))
+        self.container.set(dependency, lambda: value)
 
         actual = self.container.copy()
 
-        assert actual.resolve(dependency) == value
+        assert actual.resolve(dependency) is value
 
     @mark.parametrize('dependency, value', [
         ('key', lambda: None),
-        (get_dependency_key, 1),
+        (get_container, 1),
         ('ContainerTest', 'value')
     ])
     def test_copy_uses_only_current_dependencies(self, dependency, value):
         """copy() should return new Container with same dependencies"""
         copy = self.container.copy()
 
-        self.container.set(dependency, SingletonResolver(value))
+        self.container.set(dependency, lambda: value)
 
         with raises(DependencyError):
             assert copy.resolve(dependency)
 
     def test_copy_for_new_dependencies(self):
         """dependencies for copied container does not affect parent"""
-        self.container.set('value', SingletonResolver(0))
+        self.container.set('value', lambda: 0)
         copy = self.container.copy()
 
-        copy.set('value', SingletonResolver(1))
+        copy.set('value', lambda: 1)
 
         assert self.container.resolve('value') == 0
         assert copy.resolve('value') == 1
 
-    @mark.parametrize('param', [None, 'some param', object])
-    def test_resolves_container(self, param):
-        """should resolve Container"""
 
-        actual = self.container.resolve(Container, param=param)
-
-        assert actual == self.container
-
-
-def test_get_set_container():
-    """get should return current container"""
-    container = Container()
-
-    set_container(container)
-    actual = get_container()
-
-    assert container == actual
-
-
-@mark.usefixtures('container_fixture')
-class UseContainerTests:
-    """DefaultContainerContext class tests"""
+class CurrentContainerTests:
+    """Current container tests"""
 
     @staticmethod
-    def test_creates_container():
+    def test_default_container():
+        """default container should be created"""
+        actual = get_container()
+
+        assert actual is not None
+        assert isinstance(actual, Container)
+
+    @staticmethod
+    def test_set_default_container():
+        """should return current container"""
+        container = Container()
+
+        set_default_container(container)
+
+        assert get_container() is container
+
+    @staticmethod
+    def test_use_container():
         """should create new container and use it"""
         container = get_container()
         with use_container() as actual:
             assert actual is not None
             assert actual != container
-            assert get_container() == actual
-        assert get_container() == container
+            assert get_container() is actual
+        assert get_container() is container
 
     @staticmethod
     def test_uses_passed_container():
@@ -168,18 +137,59 @@ class UseContainerTests:
         container = get_container()
         new_container = Container()
         with use_container(new_container) as actual:
-            assert actual == new_container
-            assert get_container() == actual
-        assert get_container() == container
+            assert actual is new_container
+            assert get_container() is new_container
+        assert get_container() is container
+
+    @mark.asyncio
+    @mark.parametrize('coroutines_count', [1, 5, 10])
+    async def test_use_container_async(self, coroutines_count):
+        """should use same container in async functions"""
+        with use_container() as container:
+            coroutines = [self._get_container_async() for _ in range(coroutines_count)]
+            containers = await asyncio.gather(*coroutines)
+            for actual in containers:
+                assert actual is container
+
+    @staticmethod
+    async def _get_container_async() -> Container:
+        await asyncio.sleep(0.1)
+        return get_container()
+
+    @mark.parametrize('threads_count', [1, 2, 5])
+    def test_new_thread_container(self, threads_count):
+        """default container should be used for new thread"""
+        default = Container()
+        set_default_container(default)
+
+        with ThreadPoolExecutor(max_workers=threads_count) as executor:
+            futures = [executor.submit(get_container) for _ in range(threads_count)]
+            containers = [future.result() for future in futures]
+            for actual in containers:
+                assert actual is default
 
 
-@mark.parametrize('dependency, resolver', [
-    ('key', FunctionResolver(lambda c, param=None: 'value')),
-    (get_dependency_key, SingletonResolver(1))
-])
-def test_resolve(dependency, resolver):
-    """resolve() should resolve dependency using current container"""
-    with use_container() as container:
-        add_resolver(dependency, resolver)
+class ResolveTests:
+    """resolve function tests"""
+    @staticmethod
+    @mark.parametrize('dependency, resolve_, check', [
+        ('key', lambda: Mock(), lambda v: isinstance(v, Mock)),
+        (get_container, lambda: get_container, lambda v: v == get_container),
+        (Container, Container, lambda v: isinstance(v, Container))
+    ])
+    def test_resolve(dependency, resolve_, check):
+        """should resolve dependency using current container"""
+        with use_container() as container:
+            container.set(dependency, resolve_)
 
-        assert resolve(dependency) == container.resolve(dependency)
+            actual = resolve(dependency)
+
+            assert check(actual)
+
+    @staticmethod
+    def test_resolve_container():
+        """should resolve current container"""
+        with use_container() as container:
+            actual = resolve(Container)
+
+            assert actual == container

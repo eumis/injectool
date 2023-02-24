@@ -1,5 +1,14 @@
 # Changelog
 
+# 3.0.0
+
+- Dependency is used as a key instead of its name
+- Added default injection value
+- Resolvers are removed
+- Added scopes
+- Added default container
+- Added per thread
+
 ## 2.0.4
 
 - fixed typings

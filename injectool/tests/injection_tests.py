@@ -1,9 +1,10 @@
 from unittest.mock import Mock
+from _pytest.python_api import raises
 
 from pytest import mark, fixture
 
-from injectool.core import use_container, Container, get_dependency_key
-from injectool.injection import inject, dependency
+from injectool.core import DependencyError, use_container, Container
+from injectool.injection import In, inject, dependency
 from injectool.resolvers import add_singleton
 
 
@@ -19,9 +20,9 @@ class InjectTests:
 
     @staticmethod
     @mark.parametrize('dep, key', [
-        ('key', get_dependency_key('key')),
-        (get_dependency_key, get_dependency_key(get_dependency_key)),
-        (Container, get_dependency_key('Container'))
+        ('key', 'key'),
+        (use_container, use_container.__name__),
+        (Container, 'Container')
     ])
     def test_inject_dependency(dep, key):
         """should inject dependencies as optional parameters"""
@@ -37,9 +38,9 @@ class InjectTests:
 
     @staticmethod
     @mark.parametrize('dep, key, parameter', [
-        ('key', get_dependency_key('key'), None),
-        (get_dependency_key, get_dependency_key(get_dependency_key), 'param'),
-        (Container, get_dependency_key(Container), object())
+        ('key', 'key', None),
+        (use_container, use_container.__name__, 'param'),
+        (Container, Container.__name__, object())
     ])
     def test_uses_passed_value(dep, key, parameter):
         """should use passed value instead of inject it"""
@@ -55,7 +56,7 @@ class InjectTests:
     @staticmethod
     @mark.parametrize('dep, name', [
         ('key', 'key'),
-        (get_dependency_key, 'dep_key'),
+        (use_container, 'dep_key'),
         (Container, 'con')
     ])
     def test_inject_dependency_with_name(dep, name):
@@ -73,7 +74,7 @@ class InjectTests:
     @staticmethod
     @mark.parametrize('dep, name, parameter', [
         ('key', 'key', None),
-        (get_dependency_key, 'dep_key', 'value'),
+        (use_container, 'dep_key', 'value'),
         (Container, 'con', object())
     ])
     def test_uses_passed_value_by_name(dep, name, parameter):
@@ -89,8 +90,8 @@ class InjectTests:
 
 
 @mark.usefixtures('inject_fixture')
-@mark.parametrize('default', [True, False])
-def test_dependency(default):
+@mark.parametrize('use_implementation', [False, True])
+def test_dependency(use_implementation):
     """should resolve function or use decorated in case not registered"""
     implementation = Mock()
     default_implementation = Mock()
@@ -99,10 +100,37 @@ def test_dependency(default):
     def func():
         default_implementation()
 
-    if not default:
+    if use_implementation:
         add_singleton(func, implementation)
 
     func()
 
-    assert default_implementation.called == default
-    assert implementation.called == (not default)
+    assert default_implementation.called == (not use_implementation)
+    assert implementation.called == use_implementation
+
+class InjectedDefaultValueTests:
+    """InjectedDefaultValue test"""
+    def test_get_attr_raises(self):
+        """should raise DependencyError while getting attribute"""
+        with raises(DependencyError):
+            _ = In.value
+
+    def test_set_attr_raises(self):
+        """should raise DependencyError while setting attribute"""
+        with raises(DependencyError):
+            In.value = 'value'
+
+    def test_get_item_raises(self):
+        """should raise DependencyError while getting item"""
+        with raises(DependencyError):
+            In.value[0]
+
+    def test_set_item_raises(self):
+        """should raise DependencyError while setting item"""
+        with raises(DependencyError):
+            In.value[0] = 'value'
+
+    def test_call_raises(self):
+        """should raise DependencyError while calling it"""
+        with raises(DependencyError):
+            In()

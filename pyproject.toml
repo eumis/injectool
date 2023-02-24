@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "injectool"
 description = "Dependency injection tool"
 keywords = ["di", "dependency", "injection", "ioc", "inversion of control", "inject"]
-version = "2.0.4"
+version = "3.0.0"
 readme = "README.md"
 requires-python = ">=3.6"
 classifiers = [
@@ -24,3 +24,7 @@ classifiers = [
 [tool.pylint.main]
 disable = ["too-few-public-methods", "missing-class-docstring", "missing-function-docstring", "missing-module-docstring"]
 max-line-length = 120
+
+[tool.pytest.ini_options]
+python_files = "*_tests.py"
+python_classes = "*Tests"

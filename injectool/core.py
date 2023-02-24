@@ -1,80 +1,55 @@
 """Core functionality"""
 
-from abc import abstractmethod
 from contextlib import contextmanager
 from contextvars import ContextVar
-from copy import deepcopy
-from typing import Any, Callable, Generator, Optional, Union, Dict
+from typing import Any, Callable, Generator, Optional, Dict
 
 
 class DependencyError(Exception):
     """Base injectool error"""
 
 
-def get_dependency_key(dependency: Union[str, Callable]) -> str:
-    """returns string key for passed dependency"""
-    return dependency if isinstance(dependency, str) else dependency.__name__
-
-
-class Resolver:
-    """Interface for resolver"""
-
-    @abstractmethod
-    def resolve(self, container: 'Container', param: Optional[Any] = None) -> Any:
-        """Factory method for resolving dependency"""
-
-
-class ContainerResolver(Resolver):
-    """Returns container instance"""
-
-    def resolve(self, container: 'Container', _: Optional[Any] = None) -> 'Container':
-        return container
+Dependency = Any
+Resolver = Callable[[], Any]
 
 
 class Container:
     """Container for dependencies"""
 
-    def __init__(self, resolvers: Optional[Dict[str, Resolver]] = None):
-        self._resolvers: Dict[str, Resolver] = {} if resolvers is None else resolvers
-        self.set(Container, ContainerResolver())
+    def __init__(self, resolvers: Optional[Dict[Dependency, Resolver]] = None):
+        self._resolvers: Dict[Dependency, Resolver] = {} if resolvers is None else resolvers
+        self.set(Container, lambda: self)
 
-    def set(self, dependency: Union[str, Callable], resolver: Resolver):
+    def set(self, dependency: Dependency, resolve: Resolver):
         """Sets resolver for dependency"""
-        key = get_dependency_key(dependency)
-        self._resolvers[key] = resolver
+        self._resolvers[dependency] = resolve
 
-    def resolve(self, dependency: Union[str, Callable], param: Any = None) -> Any:
+    def resolve(self, dependency: Dependency) -> Any:
         """Resolve dependency"""
-        key = get_dependency_key(dependency)
-        try:
-            resolver = self._resolvers[key]
-            return resolver.resolve(self, param)
-        except KeyError as key_error:
-            raise DependencyError(f'Dependency "{key}" is not found') from key_error
-
-    def get_resolver(self, dependency: Union[str, Callable]) -> Optional[Resolver]:
-        """returns resolver for dependency"""
-        key = get_dependency_key(dependency)
-        return self._resolvers.get(key, None)
+        resolve = self._resolvers.get(dependency)
+        if resolve is None:
+            dependency_name = dependency.__name__ if hasattr(dependency, '__name__') else str(dependency)
+            raise DependencyError(f'Dependency "{dependency_name}" is not found')
+        return resolve()
 
     def copy(self) -> 'Container':
         """returns new container with same dependencies"""
-        resolvers = deepcopy(self._resolvers)
-        return Container(resolvers)
+        return Container(self._resolvers.copy())
 
 
-_CURRENT_CONTAINER = ContextVar('container')
-_CURRENT_CONTAINER.set(Container())
+_DEFAULT_CONTAINER = Container()
+
+def set_default_container(container: Container):
+    """Sets default container"""
+    global _DEFAULT_CONTAINER
+    _DEFAULT_CONTAINER = container
 
 
-def set_container(container: Container):
-    """Sets container used for resolving and registering dependencies"""
-    _CURRENT_CONTAINER.set(container)
-
+_CURRENT_CONTAINER = ContextVar('dependency_container')
 
 def get_container() -> Container:
-    """Returns container used for resolving and registering dependencies"""
-    return _CURRENT_CONTAINER.get()
+    """Returns current container"""
+    return _CURRENT_CONTAINER.get(_DEFAULT_CONTAINER)
 
 
 @contextmanager
@@ -91,6 +66,6 @@ def use_container(container: Optional[Container] = None) -> Generator[Container,
         _CURRENT_CONTAINER.reset(reset_token)
 
 
-def resolve(dependency: Union[str, Callable], param: Any = None):
-    """resolves dependency"""
-    return get_container().resolve(dependency, param)
+def resolve(dependency: Dependency):
+    """resolves dependency for current container"""
+    return get_container().resolve(dependency)
