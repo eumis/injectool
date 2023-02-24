@@ -31,8 +31,3 @@ jobs:
         run: |
           export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
           bash <(curl -Ls https://coverage.codacy.com/get.sh)
-      - name: Markdown autodocs
-        if: ${{ matrix.python-version == 3.9 && success() }}
-        uses: dineshsonachalam/markdown-autodocs@v1.0.7
-        with:
-          commit_message: README code snippets update
